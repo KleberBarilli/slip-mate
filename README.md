@@ -11,7 +11,7 @@ Antes de começar, você precisará ter:
 - Acesse as extensões do Chrome
 - No canto superior direito, ative o modo desenvolvedor
 - No canto superior esquerdo, clique em "carregar sem compatação"
-- Carregue a pasta do slip_mate
+- Extraia o slipmate.zip e carregue a pasta do slip_mate
 - Após isso, a extensão foi instalada em seu navegador
 - Para testar, basta selecionar as apostas, e clicar no botão para gerar a url
 - Se tudo der certo, a url já será copiada para o clipboard
@@ -22,7 +22,7 @@ Antes de começar, você precisará ter:
 - Access Chrome Extensions
 - Enable Developer Mode in the upper-right corner
 - Click "Load unpacked" in the upper-left corner
-- Load the slip_mate folder
+- Extract and load the slip_mate folder
 - The extension is now installed in your browser
 - To test, select the bets and click the button to generate the URL
 - If everything goes well, the URL will be copied to your clipboard
