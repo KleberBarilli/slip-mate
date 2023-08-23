@@ -4,7 +4,7 @@
 
 Antes de começar, você precisará ter:
 
-1. Google Chrome instalado.
+1. Google Chrome (ou derivados) instalado no seu computador.
 
 ### 1. Tutorial em Português
 
