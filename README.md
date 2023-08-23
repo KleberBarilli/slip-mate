@@ -31,3 +31,14 @@ Antes de começar, você precisará ter:
 ### 3. Tutorial em vídeo
 
 https://youtu.be/8_KEUS4Hhp4
+
+### 4. Limitações
+
+- Não funciona com o criar aposta (betbuilder)
+- Encontramos alguns problemas em alguns mercados específicos de player props para carregar a url de múltiplas apostas. No entanto, as apostas simples tendem a funcionar pra quase todos os mercados.
+
+### 5. Limitations
+
+- Does not work with bet builder
+- We encountered some issues with loading the URL for multiple bets in certain specific player prop markets. However, single bets tend to work for almost all markets.
+
