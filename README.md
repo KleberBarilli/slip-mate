@@ -42,3 +42,12 @@ https://youtu.be/8_KEUS4Hhp4
 - Does not work with bet builder
 - We encountered some issues with loading the URL for multiple bets in certain specific player prop markets. However, single bets tend to work for almost all markets.
 
+### 6. Uso
+
+- Não compartilhe a extensão com outras pessoas, para cada usuário existe uma chave e temos rastreamento via ip
+- Para gerar os links, o suporte é exclusivamente para PC's com o navegador Google Chrome
+
+### 7. Usage
+
+- Do not share the extension with others, we have one key for each user and track via IP
+- To generate the links, support is exclusively for PCs with the Google Chrome browser
