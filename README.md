@@ -35,7 +35,7 @@ https://youtu.be/8_KEUS4Hhp4
 ### 4. Limitações
 
 - Não funciona com o criar aposta (betbuilder)
-- Encontramos alguns problemas em alguns mercados específicos de player props para carregar a url de múltiplas apostas. No entanto, as apostas simples tendem a funcionar pra quase todos os mercados.
+- Encontramos alguns problemas em alguns mercados específicos para carregar a url de múltiplas apostas. No entanto, as apostas simples tendem a funcionar pra quase todos os mercados.
 
 ### 5. Limitations
 
