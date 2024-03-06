@@ -17,7 +17,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
           const postData = {
             betString: betString,
-            keyAccess: "chaves disponíveis para compra em, entre em contato caso tenha interesse"
+            keyAccess:
+              "chaves disponíveis para compra em, entre em contato caso tenha interesse",
           };
 
           const requestOptions = {
@@ -65,6 +66,7 @@ document.addEventListener("DOMContentLoaded", function () {
         tabs[0].id,
         { action: "getBetSlipBetfair" },
         function (response) {
+          console.log("response", response);
           const betState = response.betState;
 
           if (!betState) {
@@ -73,8 +75,8 @@ document.addEventListener("DOMContentLoaded", function () {
           }
 
           const postData = {
-            betState: betState,
-            keyAccess: "Free API"
+            betString: betState,
+            keyAccess: "Free API",
           };
 
           const requestOptions = {
