@@ -1,4 +1,4 @@
-# slip-mate
+# slip-mate Bet365 and Betfair(beta version)
 
 ## Pré-requisitos
 
