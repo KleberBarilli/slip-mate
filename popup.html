@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Slip Mate</title>
+    <style>
+      body {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      .button {
+        cursor: pointer;
+        border: none;
+        width: 100px;
+        padding: 8px;
+        font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+          "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+        color: #070707;
+        font-weight: bolder;
+      }
+
+      .button:hover {
+        color: white;
+      }
+
+      #generateButton {
+        background-color: #007b5b;
+      }
+      #generateButtonBetfair {
+        background-color: #3D443D;
+      }
+
+      #contactButton {
+        background-color: #edc913;
+      }
+
+      #linkButton {
+        background-color: #004430;
+      }
+    </style>
+    <script src="popup.js"></script>
+    <script src="content.js"></script>
+  </head>
+  <body>
+    <button id="generateButton" class="button">Copy Bet365 Url</button>
+    <button id="generateButtonBetfair" class="button">Copy Betfair Url</button>
+    <button id="contactButton" class="button">Contact</button>
+    <button id="linkButton" class="button">Links</button>
+    <span id="message"></span>
+  </body>
+</html>
