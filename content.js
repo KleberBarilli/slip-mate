@@ -3,9 +3,4 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     const betString = sessionStorage.getItem("betstring");
     sendResponse({ betstring: betString });
   }
-
-  if (request.action === "getBetSlipBetfair") {
-    const betState = localStorage.getItem("sportsbookBettingState");
-    sendResponse({ betState: betState });
-  }
 });
