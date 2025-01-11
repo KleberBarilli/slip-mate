@@ -30,7 +30,7 @@ Antes de começar, você precisará ter:
 - During the initial installation, sometimes it's necessary to close the browser and open it again or log out of bet365
 - It's recommended to always open a new tab on bet365 to place new bets for sharing
 
-### 3. Tutorial em vídeo
+### 3. Tutorial em vídeo - video tutorial
 
 https://youtu.be/8_KEUS4Hhp4
 
