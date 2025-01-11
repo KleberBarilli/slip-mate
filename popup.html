@@ -2,16 +2,19 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Slip Mate</title>
+    <title>Slip Mate 365</title>
     <style>
       body {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
+        background-color: #18181B;
       }
 
+      
+
       .button {
-        cursor: pointer;
+       cursor: pointer;
         border: none;
         width: 100px;
         padding: 8px;
@@ -19,7 +22,13 @@
           "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
         color: #070707;
         font-weight: bolder;
+        border-radius: 5px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s, transform 0.3s;
+        text-align: center;
+        margin: 10px;
       }
+      
 
       .button:hover {
         color: white;
@@ -32,13 +41,39 @@
       #linkButton {
         background-color: #edc913;
       }
+
+      #updateButton {
+        background-color: #1e90ff;
+      }
+
+      .version {
+        color: white;
+        font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+          "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+        font-size: 10px;
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      #message {
+        color: white;
+        font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+          "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+        font-size: 10px;
+        margin-top: 10px;
+        text-align: center;
+        display: flex;
+      }
+      
     </style>
     <script src="popup.js"></script>
     <script src="content.js"></script>
   </head>
   <body>
-    <button id="generateButton" class="button">Copy Bet Link</button>
+    <button id="generateButton" class="button">Copiar Link da Aposta</button>
     <button id="linkButton" class="button">Links</button>
+    <button id="updateButton" class="button">Verificar Atualizações</button>
     <span id="message"></span>
+    <div class="version">Versão Atual: 1.1</div>
   </body>
 </html>

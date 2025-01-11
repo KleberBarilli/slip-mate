@@ -23,9 +23,8 @@ document.addEventListener("DOMContentLoaded", function() {
           return `%7C${eventID}-${marketID}~${valuesN7Array[index]}`;
       });
 
-      const formattedUrl = `https://www.bet365.com/dl/sportsbookredirect?bet=1&bs=${formattedTips.join(
-    '',
-  )}`;
+      const formattedUrl = `https://www.bet365.bet.br/dl/sportsbookredirect?bet=1&bs=${formattedTips.join('')}`; // For Brazil
+      //const formattedUrl = `https://www.bet365.com/dl/sportsbookredirect?bet=1&bs=${formattedTips.join('')}`; // For other countries
       return formattedUrl;
   }
 
@@ -49,7 +48,7 @@ document.addEventListener("DOMContentLoaded", function() {
                   navigator.clipboard
                       .writeText(formattedUrl)
                       .then(() => {
-                          messageElement.textContent = "URL copied to clipboard!";
+                          messageElement.textContent = "URL copiada com sucesso!";
                       })
                       .catch((error) => {
                           console.error("Error copying to clipboard:", error);
@@ -65,4 +64,9 @@ document.addEventListener("DOMContentLoaded", function() {
           url: "http://telegram.me/the_smart_bettor_bot"
       });
   });
+  updateButton.addEventListener("click", function() {
+    chrome.tabs.create({
+        url: "https://github.com/KleberBarilli/slip-mate/releases"
+    });
+});
 });
