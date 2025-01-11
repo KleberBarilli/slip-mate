@@ -20,6 +20,8 @@ Antes de começar, você precisará ter:
 
 ### 2. Tutorial in English
 
+- If you access bet365 outside brazil, change bet365 url in popup.js file to `https://www.bet365.com/dl/sportsbookredirect?bet=1&bs=${formattedTips.join('')}` <br> example: ![code](https://github.com/user-attachments/assets/51da7bb9-23cf-40a4-9937-3c90e407deac)
+
 - Access Chrome Extensions
 - Enable Developer Mode in the upper-right corner
 - Click "Load unpacked" in the upper-left corner
