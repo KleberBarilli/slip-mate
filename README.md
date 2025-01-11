@@ -1,4 +1,4 @@
-# Slip-mate Bet365
+# Slip-mate Bet365 - Copy bet url
 
 ## Pré-requisitos
 
