@@ -1,4 +1,4 @@
-# slip-mate Bet365
+# Slip-mate Bet365
 
 ## Pré-requisitos
 
