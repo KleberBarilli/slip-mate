@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   linkButton.addEventListener("click", function() {
       chrome.tabs.create({
-          url: "http://telegram.me/the_smart_bettor_bot"
+          url: "https://linktr.ee/thesmartbettor"
       });
   });
   updateButton.addEventListener("click", function() {
