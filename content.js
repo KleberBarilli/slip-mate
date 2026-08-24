@@ -149,7 +149,9 @@
         await store.setMappingError(t(
           event.data.payload?.code === "unsupportedMarket"
             ? "unsupportedMarketError"
-            : "identifySelectionFailed",
+            : event.data.payload?.code === "selectionLabelUnavailable"
+              ? "selectionLabelUnavailableError"
+              : "identifySelectionFailed",
           undefined,
           "Este mercado não funciona no Bilhete sem login. Se estiver logado, desligue o recurso para usar pela Bet365."
         ))

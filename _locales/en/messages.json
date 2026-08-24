@@ -56,6 +56,7 @@
   "unknownAction": { "message": "Unknown action." },
   "unexpectedExtensionError": { "message": "Unexpected extension error." },
   "unsupportedMarketError": { "message": "This market does not work in the no-login bet slip. If signed in, turn it off to use the market through Bet365." },
+  "selectionLabelUnavailableError": { "message": "Bet365 did not provide this selection's full name. It was not added." },
   "panelSubtitle": { "message": "Your no-login bet slip" },
   "collapseSlipMate": { "message": "Collapse Slip Mate" },
   "expandSlipMate": { "message": "Expand Slip Mate" },

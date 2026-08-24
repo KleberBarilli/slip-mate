@@ -1,5 +1,28 @@
 # Changelog
 
+## 3.2.2 — 2026-08-24
+
+### Correção
+
+- relaciona cada odd de mercado de jogador à linha correta da tabela da
+  Bet365, exibindo nomes como `Matheus Martins` em vez de repetir
+  `Para Marcar`;
+- preserva limites como `2+` no título e mantém mercado e evento como
+  contexto;
+- cobre tanto a grade de jogadores da página inicial quanto as tabelas dentro
+  da página completa do evento;
+- rejeita a seleção quando o nome obrigatório do jogador não puder ser
+  identificado, em vez de adicionar um texto incompleto;
+- melhora o contexto de 1X2, totais e mercados renderizados na página do
+  evento.
+
+### Validação
+
+- testado no navegador deslogado com 1X2, totais, Para marcar, Gol ou
+  assistência, cartão, chutes no gol, chutes, faltas e desarmes;
+- mensagens de falha disponíveis em PT-BR e English;
+- 27 testes automatizados aprovados.
+
 ## 3.2.1 — 2026-08-24
 
 ### Correção

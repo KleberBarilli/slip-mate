@@ -25,6 +25,7 @@ test("extracts Bet365 IDs and native OD from a React stem", () => {
     fractionalOdd: "13/5",
     decimalOdd: 3.6,
     selectionName: "Arsenal",
+    subjectName: "",
     marketName: "Match Result",
     eventName: "Arsenal v Chelsea",
     handicap: "",
@@ -98,4 +99,58 @@ test("uses visible page context when ancestry does not expose names", () => {
   });
   assert.equal(selection.marketName, "Resultado da partida");
   assert.equal(selection.eventName, "Arsenal v Chelsea");
+});
+
+test("keeps the player name separate from a generic player market label", () => {
+  const fixture = {
+    nodeName: "EV",
+    data: { FI: "198646827", N1: "Botafogo", N2: "Athletico-PR" },
+    parent: null
+  };
+  const market = {
+    nodeName: "MA",
+    data: { ID: "7788", NA: "Para Marcar", MA: "7788" },
+    parent: fixture
+  };
+  const participant = {
+    nodeName: "PA",
+    data: { ID: "91767340254", OD: "7/4", NA: "Para Marcar" },
+    parent: market
+  };
+
+  const selection = extractSelectionFromStem(participant, {
+    decimalOdd: "2.75",
+    subjectName: "Matheus Martins",
+    marketName: "Para Marcar",
+    eventName: "Botafogo v Athletico-PR"
+  });
+
+  assert.equal(selection.subjectName, "Matheus Martins");
+  assert.equal(selection.selectionName, "Para Marcar");
+  assert.equal(selection.marketName, "Para Marcar");
+});
+
+test("prefers a visible player threshold over a propagated market name", () => {
+  const fixture = { data: { FI: "198646827" }, parent: null };
+  const participant = {
+    nodeName: "PA",
+    data: { ID: "91767340254", OD: "3/2", NA: "Chutes" },
+    parent: fixture
+  };
+
+  const selection = extractSelectionFromStem(participant, {
+    selectionName: "2+",
+    subjectName: "Matheus Martins",
+    marketName: "Chutes"
+  });
+
+  assert.equal(selection.selectionName, "2+");
+  assert.equal(selection.subjectName, "Matheus Martins");
+});
+
+test("requires a visible selection or subject label", () => {
+  const { hasUsableSelectionLabel } = require("../bet365-hook.js");
+  assert.equal(hasUsableSelectionLabel({ selectionName: "" }), false);
+  assert.equal(hasUsableSelectionLabel({ selectionName: "X" }), true);
+  assert.equal(hasUsableSelectionLabel({ subjectName: "Matheus Martins" }), true);
 });

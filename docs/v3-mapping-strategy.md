@@ -29,8 +29,17 @@ When the No-login bet slip is active, it:
 4. blocks the event before Bet365 can open the logged-out login dialog;
 5. sends only the normalized selection to the isolated content script.
 
+Player markets require one additional correlation step because Bet365 renders
+the player names and clickable odds in parallel rows. The hook uses the row
+index to attach the player as `subjectName`; threshold labels such as `2+`
+remain the selection name, while the table header remains the market name.
+This covers both the player grid embedded on the sports home and the rendered
+market table inside an event.
+
 If a visible odds target cannot be mapped, the event is blocked and the UI
 shows an unsupported-market message. It does not fall through to Bet365.
+If a player table is recognized but the corresponding player name is not, the
+selection is also rejected rather than displaying an ambiguous market label.
 
 ## Why not WebSocket parsing in V3.0
 
@@ -50,6 +59,10 @@ from participant elements.
 - Visible odds do not expose useful IDs in HTML attributes.
 - The current Bet365 participant delegate uses `ID`, `OD` and ancestor `FI` to
   build `TP=BS<FI>-<ID>` normal bets.
+- Player labels were verified in the public home grid and full event tables for
+  scorer, score-or-assist, booking, shots on target, shots, fouls and tackles.
+- Normal result and totals layouts were checked alongside the player tables to
+  keep the label fallback scoped to the correct component.
 
 ## Compatibility boundary
 

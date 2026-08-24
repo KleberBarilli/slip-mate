@@ -73,6 +73,12 @@
     return !/^\d+(?:[.,]\d+)?$/.test(label);
   }
 
+  function hasUsableSelectionLabel(selection) {
+    return Boolean(cleanLabel(
+      selection?.subjectName || selection?.selectionName || selection?.handicap
+    ));
+  }
+
   function extractSelectionFromStem(stem, context = {}) {
     if (!isStem(stem)) return null;
 
@@ -86,7 +92,13 @@
 
     let cursor = stem;
     let eventId = "";
-    const selectionName = cleanLabel(stem.data.NA || context.selectionName);
+    const subjectName = cleanLabel(context.subjectName);
+    const visibleSelectionName = cleanLabel(context.selectionName);
+    const selectionName = cleanLabel(
+      subjectName && visibleSelectionName
+        ? visibleSelectionName
+        : stem.data.NA || visibleSelectionName
+    );
     let eventName = cleanLabel(context.eventName);
     let marketName = cleanLabel(context.marketName);
     let marketId = "";
@@ -143,6 +155,7 @@
       fractionalOdd,
       decimalOdd: Number.isFinite(decimalOdd) && decimalOdd > 1 ? decimalOdd : null,
       selectionName,
+      subjectName,
       marketName,
       eventName,
       handicap: String(stem.data.HA || stem.data.HD || "").trim(),
@@ -150,7 +163,12 @@
     };
   }
 
-  const api = { extractSelectionFromStem, findStemOnNode, nameFromData };
+  const api = {
+    extractSelectionFromStem,
+    findStemOnNode,
+    hasUsableSelectionLabel,
+    nameFromData
+  };
   if (typeof module === "object" && module.exports) module.exports = api;
 
   if (!scope.document || scope.__SLIP_MATE_HOOK_INSTALLED__) return;
@@ -202,6 +220,232 @@
       return "";
     }
 
+    function playerNameNodes(container) {
+      if (!(container instanceof Element)) return [];
+      const paragraphs = [...container.querySelectorAll("p")].filter((node) => {
+        const value = visibleText(node, 100);
+        return value && /\p{L}/u.test(value);
+      });
+      if (paragraphs.length > 0) return paragraphs;
+
+      const playerHeader = [...container.querySelectorAll("*")].find((node) =>
+        node.children.length === 0 &&
+        /^(?:player|jogador)\s*\/\s*(?:last|últim)/i.test(visibleText(node, 100))
+      );
+      let list = playerHeader?.parentElement;
+      let depth = 0;
+
+      while (list instanceof Element && depth < 4) {
+        const names = [...list.children].map((row) =>
+          [...row.querySelectorAll("span, p, div")].find((node) => {
+            const value = node.children.length === 0 ? visibleText(node, 100) : "";
+            return value &&
+              /\p{L}/u.test(value) &&
+              value.toLocaleUpperCase() !== "N/A" &&
+              !/^(?:player|jogador)\s*\//i.test(value);
+          })
+        ).filter(Boolean);
+        if (names.length > 0) return names;
+        list = list.parentElement;
+        depth += 1;
+      }
+
+      return [];
+    }
+
+    function findPlayerCard() {
+      let cursor = participant;
+      let depth = 0;
+
+      while (cursor && depth < 12) {
+        const hasPlayerModuleClass = [...cursor.classList]
+          .some((className) => /^(?:plr|prp|rrb|rrd)-/.test(className));
+        if (!hasPlayerModuleClass) {
+          cursor = cursor.parentElement;
+          depth += 1;
+          continue;
+        }
+        const tabGroups = new Map();
+
+        for (const tab of cursor.querySelectorAll("[data-content]")) {
+          if (!(tab.parentElement instanceof Element)) continue;
+          if (!tabGroups.has(tab.parentElement)) tabGroups.set(tab.parentElement, []);
+          tabGroups.get(tab.parentElement).push(tab);
+        }
+
+        const hasMarketTabs = [...tabGroups.values()].some((tabs) => tabs.length >= 2);
+        const hasPlayerHeader = [...cursor.querySelectorAll("*")].some((node) =>
+          node.children.length === 0 &&
+          /^(?:player|jogador)\s*\/\s*(?:last|últim)/i.test(visibleText(node, 100))
+        );
+        if (
+          hasPlayerModuleClass &&
+          (hasMarketTabs || hasPlayerHeader) &&
+          playerNameNodes(cursor).length > 0 &&
+          cursor.querySelectorAll(".rgl-43895c").length > 0
+        ) {
+          return cursor;
+        }
+
+        cursor = cursor.parentElement;
+        depth += 1;
+      }
+
+      return null;
+    }
+
+    function activePlayerMarket(card) {
+      if (!(card instanceof Element)) return "";
+      const tabGroups = new Map();
+
+      for (const tab of card.querySelectorAll("[data-content]")) {
+        if (!(tab.parentElement instanceof Element)) continue;
+        if (!tabGroups.has(tab.parentElement)) tabGroups.set(tab.parentElement, []);
+        tabGroups.get(tab.parentElement).push(tab);
+      }
+
+      for (const tabs of tabGroups.values()) {
+        if (tabs.length < 2) continue;
+        const classCounts = tabs.map((tab) => tab.classList.length);
+        const maxClassCount = Math.max(...classCounts);
+        const minClassCount = Math.min(...classCounts);
+        if (maxClassCount === minClassCount) continue;
+        const active = tabs.find((tab) => tab.classList.length === maxClassCount);
+        const value = visibleText(active, 100) || cleanLabel(active?.dataset.content);
+        if (value) return value;
+      }
+
+      return "";
+    }
+
+    function eventNameFromContainer(container) {
+      if (!container?.querySelectorAll) return "";
+
+      for (const separator of container.querySelectorAll("span, div")) {
+        if (separator.children.length > 0) continue;
+        if (!/^(?:v|vs\.?|x)$/i.test(visibleText(separator, 8))) continue;
+        const siblings = [...(separator.parentElement?.children || [])];
+        const separatorIndex = siblings.indexOf(separator);
+        const before = siblings
+          .slice(0, separatorIndex)
+          .reverse()
+          .map((node) => visibleText(node, 100))
+          .find((value) => value && /\p{L}/u.test(value));
+        const after = siblings
+          .slice(separatorIndex + 1)
+          .map((node) => visibleText(node, 100))
+          .find((value) => value && /\p{L}/u.test(value));
+        if (before && after) return `${before} v ${after}`;
+      }
+
+      return "";
+    }
+
+    function siblingSelectionName() {
+      if (!(participant.parentElement instanceof Element)) return "";
+      return [...participant.parentElement.children]
+        .filter((node) => node !== participant && !node.matches(".rgl-43895c"))
+        .map((node) => visibleText(node, 100))
+        .find((value) => value && value !== decimalOdd) || "";
+    }
+
+    function couponContext() {
+      let cursor = participant;
+      let depth = 0;
+
+      while (cursor && depth < 8) {
+        const headers = [...cursor.querySelectorAll("header")]
+          .map((node) => visibleText(node, 20).toLocaleUpperCase());
+        if (headers.includes("1") && headers.includes("X") && headers.includes("2")) {
+          const teams = [...cursor.querySelectorAll("span")]
+            .filter((node) => !node.closest(".rgl-43895c"))
+            .map((node) => visibleText(node, 100))
+            .filter((value) => value && /\p{L}/u.test(value))
+            .filter((value, index, values) => values.indexOf(value) === index);
+          return {
+            marketName: "1X2",
+            eventName: teams.length >= 2 ? `${teams[0]} v ${teams[1]}` : ""
+          };
+        }
+        cursor = cursor.parentElement;
+        depth += 1;
+      }
+
+      return { marketName: "", eventName: "" };
+    }
+
+    function standardMarketName() {
+      let cursor = participant;
+      let depth = 0;
+
+      while (cursor && depth < 9) {
+        const isRenderedMarket = [...cursor.classList]
+          .some((className) => /^rrb-/.test(className));
+        if (isRenderedMarket && cursor.querySelectorAll(".rgl-43895c").length > 0) {
+          const candidate = [...cursor.querySelectorAll("span")]
+            .filter((node) => !node.closest(".rgl-43895c"))
+            .map((node) => visibleText(node, 160))
+            .find((value) => value && /\p{L}/u.test(value));
+          if (candidate) return candidate;
+        }
+        cursor = cursor.parentElement;
+        depth += 1;
+      }
+
+      return "";
+    }
+
+    function playerDetails(card) {
+      if (!(card instanceof Element)) return { subjectName: "", marketName: "" };
+      const names = playerNameNodes(card);
+      const isRenderedMarketTable = [...card.classList]
+        .some((className) => /^rrb-/.test(className));
+      let cursor = participant;
+
+      while (cursor && cursor !== card) {
+        const rowNames = playerNameNodes(cursor);
+        if (
+          rowNames.length === 1 &&
+          cursor.querySelectorAll(".rgl-43895c").length > 0
+        ) {
+          return {
+            subjectName: visibleText(rowNames[0], 100),
+            marketName: isRenderedMarketTable ? "" : activePlayerMarket(card)
+          };
+        }
+        cursor = cursor.parentElement;
+      }
+
+      const column = participant.parentElement;
+      const columnChildren = column ? [...column.children] : [];
+      const participantIndex = columnChildren.indexOf(participant);
+      const headerCount = columnChildren.length - names.length;
+
+      if (
+        participantIndex >= 0 &&
+        headerCount >= 0 &&
+        headerCount <= 3 &&
+        participantIndex >= headerCount
+      ) {
+        const rowIndex = participantIndex - headerCount;
+        const columnHeader = columnChildren
+          .slice(0, headerCount)
+          .map((node) => visibleText(node, 100))
+          .find((value) => value && /\p{L}/u.test(value));
+        return {
+          subjectName: visibleText(names[rowIndex], 100),
+          marketName: isRenderedMarketTable
+            ? ""
+            : columnHeader || activePlayerMarket(card)
+        };
+      }
+
+      return {
+        subjectName: "",
+        marketName: isRenderedMarketTable ? "" : activePlayerMarket(card)
+      };
+    }
+
     const decimalOdd = visibleText(oddsElement, 16);
     const explicitSelectionName = firstText(participant, [
       ".srb-ParticipantResponsiveText_Name",
@@ -212,13 +456,20 @@
     const participantLines = String(participant.innerText || participant.textContent || "")
       .split(/\r?\n/)
       .map(cleanLabel)
+      .map((value) => value.endsWith(` ${decimalOdd}`)
+        ? cleanLabel(value.slice(0, -decimalOdd.length))
+        : value)
       .filter((value) => value && value !== decimalOdd);
-    const selectionName = explicitSelectionName || participantLines[0] || "";
+    const selectionName = explicitSelectionName || participantLines[0] || siblingSelectionName();
+
+    const playerCard = findPlayerCard();
+    const player = playerDetails(playerCard);
+    const coupon = couponContext();
 
     const marketGroup = participant.closest(
       ".gl-MarketGroupPod, .gl-MarketGroup, [class*='MarketGroup'], [class*='MarketCoupon']"
     );
-    const marketName = firstText(marketGroup, [
+    const marketName = player.marketName || coupon.marketName || standardMarketName() || firstText(marketGroup, [
       ".gl-MarketGroupButton_Text",
       "[class*='MarketGroupButton_Text']",
       "[class*='MarketGroupHeader']",
@@ -236,9 +487,21 @@
         .filter(Boolean)
         .filter((value, index, values) => values.indexOf(value) === index)
       : [];
-    const eventName = teamNames.length >= 2 ? `${teamNames[0]} v ${teamNames[1]}` : "";
+    const eventName = eventNameFromContainer(playerCard) || coupon.eventName ||
+      (teamNames.length >= 2 ? `${teamNames[0]} v ${teamNames[1]}` : "") ||
+      (/\/E\d+\//.test(scope.location?.hash || "")
+        ? eventNameFromContainer(scope.document)
+        : "");
 
-    return { participant, decimalOdd, selectionName, marketName, eventName };
+    return {
+      participant,
+      decimalOdd,
+      selectionName,
+      subjectName: player.subjectName,
+      marketName,
+      eventName,
+      playerMarket: Boolean(playerCard)
+    };
   }
 
   function resolveSelection(path) {
@@ -248,7 +511,18 @@
       if (!stem) continue;
       const context = getDisplayContext(node);
       const selection = extractSelectionFromStem(stem, context);
-      if (selection) return { selection, element: context.participant || node };
+      if (selection) {
+        const errorCode =
+          (context.playerMarket && !selection.subjectName) ||
+          !hasUsableSelectionLabel(selection)
+            ? "selectionLabelUnavailable"
+            : "";
+        return {
+          selection,
+          element: context.participant || node,
+          errorCode
+        };
+      }
     }
     return null;
   }
@@ -310,6 +584,16 @@
         post("BET365_MAPPING_ERROR", {
           code: "unsupportedMarket"
         });
+      }
+      return;
+    }
+
+    if (resolved.errorCode) {
+      block(event);
+      const now = Date.now();
+      if ((event.type === "pointerdown" || event.type === "click") && now - lastFailureAt > 700) {
+        lastFailureAt = now;
+        post("BET365_MAPPING_ERROR", { code: resolved.errorCode });
       }
       return;
     }

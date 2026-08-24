@@ -47,6 +47,15 @@ test("normalizes only safe page selections", () => {
     normalizeSelection({ eventId: "12", selectionId: "bad", fractionalOdd: "6/5" }),
     null
   );
+  assert.equal(
+    normalizeSelection({
+      eventId: "12",
+      selectionId: "34",
+      fractionalOdd: "6/5",
+      subjectName: "Matheus Martins"
+    }).subjectName,
+    "Matheus Martins"
+  );
 });
 
 test("treats visible login controls as logged out even with a stale betstring", () => {
