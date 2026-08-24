@@ -39,7 +39,7 @@ test("configures Chrome localization and references known popup messages", () =>
   const popupKeys = [...popup.matchAll(/data-i18n="([^"]+)"/g)].map((match) => match[1]);
 
   assert.equal(manifest.default_locale, "pt_BR");
-  assert.equal(manifest.version, "3.2.0");
+  assert.equal(manifest.version, "3.2.1");
   assert.equal(manifest.name, "__MSG_extensionName__");
   assert.equal(manifest.description, "__MSG_extensionDescription__");
   assert.ok(manifest.content_scripts[1].js.includes("i18n.js"));

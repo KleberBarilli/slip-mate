@@ -13,11 +13,39 @@
   }
 
   function displayName(selection) {
-    return selection.selectionName || selection.marketName || t(
+    const baseName = selection.selectionName || selection.marketName || t(
       "selectionFallback",
       String(selection.selectionId),
       `Seleção ${selection.selectionId}`
     );
+    const eventSides = String(selection.eventName || "")
+      .split(/\s+(?:v|vs\.?|x)\s+/i)
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const resultMarket = /resultado|match result|full[- ]time result|moneyline|vencedor|winner/i
+      .test(String(selection.marketName || ""));
+
+    if (eventSides.length === 2 && resultMarket) {
+      if (baseName === "1") return `${eventSides[0]} (1)`;
+      if (baseName.toLocaleUpperCase() === "X") {
+        return `${t("drawSelection", undefined, "Empate")} (X)`;
+      }
+      if (baseName === "2") return `${eventSides[1]} (2)`;
+    }
+
+    const handicap = String(selection.handicap || "").trim();
+    return handicap && !String(baseName).includes(handicap)
+      ? `${baseName} ${handicap}`
+      : baseName;
+  }
+
+  function displayContext(selection) {
+    const selectionName = String(selection.selectionName || "").trim();
+    const values = [selection.marketName, selection.eventName]
+      .map((value) => String(value || "").trim())
+      .filter((value) => value && value !== selectionName)
+      .filter((value, index, items) => items.indexOf(value) === index);
+    return values.join(" · ") || t("genericBet365Market", undefined, "Mercado Bet365");
   }
 
   function create(callbacks = {}) {
@@ -134,20 +162,24 @@
         }
         .item-copy { min-width: 0; }
         .item-name {
+          display: -webkit-box;
           overflow: hidden;
           color: #17221d;
           font-size: 13px;
           font-weight: 750;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          line-height: 1.3;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
         }
         .item-context {
+          display: -webkit-box;
           overflow: hidden;
           margin-top: 3px;
           color: #718078;
           font-size: 10px;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          line-height: 1.35;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
         }
         .odd {
           color: #103d31;
@@ -281,22 +313,19 @@
       items.innerHTML = selections.length
         ? selections.map((selection) => {
             const key = `${selection.eventId}:${selection.selectionId}`;
-            const context = selection.eventName || selection.marketName || t(
-              "genericBet365Market",
-              undefined,
-              "Mercado Bet365"
-            );
+            const name = displayName(selection);
+            const context = displayContext(selection);
             const decimal = Number(selection.decimalOdd) > 1
               ? Number(selection.decimalOdd).toFixed(2)
               : root.SlipMateURL.fractionalToDecimal(selection.fractionalOdd)?.toFixed(2) || "—";
             return `
               <li class="item">
                 <div class="item-copy">
-                  <div class="item-name">${escapeHtml(displayName(selection))}</div>
-                  <div class="item-context">${escapeHtml(context)}</div>
+                  <div class="item-name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+                  <div class="item-context" title="${escapeHtml(context)}">${escapeHtml(context)}</div>
                 </div>
                 <span class="odd">${escapeHtml(decimal)}</span>
-                <button class="remove" type="button" data-remove-key="${escapeHtml(key)}" aria-label="${escapeHtml(t("removeSelection", displayName(selection), `Remover ${displayName(selection)}`))}">×</button>
+                <button class="remove" type="button" data-remove-key="${escapeHtml(key)}" aria-label="${escapeHtml(t("removeSelection", name, `Remover ${name}`))}">×</button>
               </li>`;
           }).join("")
         : `<li class="empty">${escapeHtml(t("emptyInstructionPrimary", undefined, "Clique em uma odd da Bet365."))}<br>${escapeHtml(t("emptyInstructionSecondary", undefined, "Ela entra aqui sem abrir o login."))}</li>`;
@@ -341,5 +370,7 @@
     };
   }
 
-  root.SlipMateUI = { create };
+  const api = { create, displayContext, displayName };
+  if (typeof module === "object" && module.exports) module.exports = api;
+  root.SlipMateUI = api;
 })(globalThis);
