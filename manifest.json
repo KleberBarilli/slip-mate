@@ -1,13 +1,37 @@
 {
   "manifest_version": 3,
   "name": "Slip Mate",
-  "version": "2.0",
-  "description": "Gere link de aposta compartilhavel na bet365 e betfair",
+  "version": "3.1.0",
+  "minimum_chrome_version": "102",
+  "description": "Crie e compartilhe links de apostas Bet365, inclusive sem login.",
   "permissions": ["activeTab", "clipboardWrite", "storage"],
+  "background": {
+    "service_worker": "service-worker.js"
+  },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "matches": [
+        "https://www.bet365.bet.br/*",
+        "https://www.bet365.com/*"
+      ],
+      "js": ["bet365-hook.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://www.bet365.bet.br/*",
+        "https://www.bet365.com/*"
+      ],
+      "css": ["slip-mate-page.css"],
+      "js": [
+        "url-builder.js",
+        "bet365-parser.js",
+        "slip-store.js",
+        "slip-ui.js",
+        "content.js"
+      ],
+      "run_at": "document_start"
     }
   ],
   "action": {

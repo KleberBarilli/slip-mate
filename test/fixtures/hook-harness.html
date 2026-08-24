@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Slip Mate hook harness</title>
+    <script src="../../bet365-hook.js"></script>
+  </head>
+  <body>
+    <button id="unrelated" onclick="this.dataset.clicked = 'yes'">Unrelated control</button>
+    <div id="selection" class="rgl-43895c" onclick="this.dataset.bet365Clicked = 'yes'">
+      <span class="rgl-4a5de5">3.60</span>
+    </div>
+    <output id="result">waiting</output>
+    <script>
+      const fixture = {
+        nodeName: "EV",
+        data: { FI: "185360040", N1: "Arsenal", N2: "Chelsea" },
+        parent: null
+      };
+      const market = {
+        nodeName: "MA",
+        data: { ID: "7788", MA: "7788", NA: "Match Result" },
+        parent: fixture
+      };
+      const stem = {
+        nodeName: "PA",
+        data: { ID: "40586567", OD: "13/5", NA: "Arsenal" },
+        parent: market
+      };
+      document.getElementById("selection")["__reactFiber$harness"] = {
+        memoizedProps: {},
+        return: { memoizedProps: { stem }, return: null }
+      };
+      window.addEventListener("message", (event) => {
+        if (event.data?.source === "SLIP_MATE_PAGE" && event.data.type === "BET365_SELECTION") {
+          document.getElementById("result").textContent = JSON.stringify(event.data.payload);
+        }
+      });
+      window.postMessage({
+        source: "SLIP_MATE_CONTENT",
+        type: "SET_MODE",
+        payload: { enabled: true }
+      }, "*");
+    </script>
+  </body>
+</html>
