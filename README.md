@@ -1,47 +1,94 @@
-# Slip-mate Bet365 - Copy bet url
+# Slip Mate V3.2
 
-## Pré-requisitos
+Extensão Chromium para criar links compartilháveis da Bet365. A V3 preserva o
+fluxo clássico para usuários conectados e adiciona um slip próprio para quem
+está deslogado.
 
-Antes de começar, você precisará ter:
+## Modos de uso
 
-1. Google Chrome (ou derivados) instalado no seu computador.
+- **Bilhete sem login desligado:** a Bet365 funciona normalmente. Quando existe
+  um betslip conectado, o popup lê o `betstring` e preserva o fluxo antigo.
+- **Bilhete sem login ligado:** o clique na odd é interceptado e a seleção entra
+  no painel próprio, esteja a conta conectada ou deslogada.
 
-### 1. Tutorial em Português
+O modo é sempre manual. A detecção da conta serve apenas para informar o status
+e não bloqueia o seletor.
 
-- Acesse as extensões do Chrome
-- No canto superior direito, ative o modo desenvolvedor
-- No canto superior esquerdo, clique em "carregar sem compatação"
-- Extraia o slipmate.zip e carregue a pasta do slip_mate
-- Após isso, a extensão foi instalada em seu navegador
-- Para testar, basta selecionar as apostas, e clicar no botão para gerar a url
-- Se tudo der certo, a url já será copiada para o clipboard
-- Na 1ª instalação, as vezes é preciso fechar o navegador e abrir novamente ou deslogar da bet365
-- É recomendável sempre abrir uma nova guia na bet365 para fazer novas apostas e compartilhar
+O estado do slip deslogado fica em `chrome.storage.session`, separado por guia,
+e é descartado quando a sessão do navegador termina.
 
-### 2. Tutorial in English
+## Idiomas
 
-- If you access bet365 outside brazil, change bet365 url in popup.js file to `https://www.bet365.com/dl/sportsbookredirect?bet=1&bs=${formattedTips.join('')}` <br> example: ![code](https://github.com/user-attachments/assets/51da7bb9-23cf-40a4-9937-3c90e407deac)
+A V3.2 usa a localização nativa das extensões Chromium:
 
-- Access Chrome Extensions
-- Enable Developer Mode in the upper-right corner
-- Click "Load unpacked" in the upper-left corner
-- Extract and load the slip_mate folder
-- The extension is now installed in your browser
-- To test, select the bets and click the button to generate the URL
-- If everything goes well, the URL will be copied to your clipboard
-- During the initial installation, sometimes it's necessary to close the browser and open it again or log out of bet365
-- It's recommended to always open a new tab on bet365 to place new bets for sharing
+- **Português do Brasil** é o idioma padrão;
+- **English** é selecionado automaticamente quando o navegador usa inglês.
 
-### 3. Tutorial em vídeo - video tutorial
+Não há seletor manual no popup. Nome, descrição, popup, painel flutuante, avisos
+e erros acompanham o locale do navegador.
 
-https://youtu.be/8_KEUS4Hhp4
+## Instalação local
 
-### 4. Limitações
+1. Abra `chrome://extensions`.
+2. Ative **Modo do desenvolvedor**.
+3. Clique em **Carregar sem compactação**.
+4. Escolha esta pasta do projeto.
+5. Recarregue uma guia da Bet365 que já estava aberta.
 
-- Não funciona com o criar aposta (betbuilder)
-- Encontramos alguns problemas em alguns mercados específicos para carregar a url de múltiplas apostas. No entanto, as apostas simples tendem a funcionar pra quase todos os mercados.
+O manifesto restringe os scripts a:
 
-### 5. Limitations
+- `https://www.bet365.bet.br/*`
+- `https://www.bet365.com/*`
 
-- Does not work with bet builder
-- We encountered some issues with loading the URL for multiple bets in certain specific player prop markets. However, single bets tend to work for almost all markets.
+## Desenvolvimento
+
+Não há dependências de runtime nem backend. Os testes usam o runner nativo do
+Node:
+
+```bash
+npm test
+```
+
+Eles cobrem:
+
+- parser do `betstring` legado;
+- extração de `FI + ID + OD` do estado React;
+- geração exata de links simples e múltiplos;
+- conversão e combinação de odds fracionárias.
+
+## Arquitetura V3
+
+- `bet365-hook.js` — captura a seleção no MAIN world e bloqueia o login.
+- `bet365-parser.js` — normaliza seleção e preserva o parser legado.
+- `service-worker.js` / `slip-store.js` — estado por guia durante a sessão.
+- `slip-ui.js` — painel flutuante do modo deslogado.
+- `url-builder.js` — único gerador de URL para os dois fluxos.
+- `i18n.js` / `_locales` — localização automática PT-BR e English.
+- `content.js` — autenticação, ponte e coordenação da página.
+
+A estratégia de mapeamento e as evidências da investigação estão em
+[`docs/v3-mapping-strategy.md`](docs/v3-mapping-strategy.md).
+
+## Escopo e limitações
+
+O Bilhete sem login mira mercados normais pré-jogo. Nele, não são
+compatíveis:
+
+- **Criar Aposta** (Bet Builder);
+- **Aposta Aumentada** e outras combinações de boost;
+- mercados **Ao Vivo**.
+
+Mercados especiais que não fornecem os três IDs obrigatórios também falham de
+forma segura: o clique é bloqueado e o painel avisa, sem abrir o login. Essa
+mesma lista fica disponível no popup em **Compatibilidade do Bilhete sem login**.
+
+Quando o usuário está logado e deixa o Bilhete sem login desligado, a extensão
+não intercepta os cliques: Criar Aposta, boosts e mercados Ao Vivo continuam
+funcionando pelo fluxo nativo da Bet365.
+
+O rodapé do popup também oferece acesso ao
+[Stake Mate](https://stakemateapp.com/), a calculadora de EV.
+
+A Bet365 usa uma aplicação privada e pode alterar seus componentes internos.
+Por isso toda dependência de React/Bet365 está concentrada em um único hook e
+deve ser validada a cada release.

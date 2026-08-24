@@ -1,79 +1,74 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>Slip Mate 365</title>
-    <style>
-      body {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-        background-color: #18181B;
-      }
-
-      
-
-      .button {
-       cursor: pointer;
-        border: none;
-        width: 100px;
-        padding: 8px;
-        font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
-          "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
-        color: #070707;
-        font-weight: bolder;
-        border-radius: 5px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: background-color 0.3s, transform 0.3s;
-        text-align: center;
-        margin: 10px;
-      }
-      
-
-      .button:hover {
-        color: white;
-      }
-
-      #generateButton {
-        background-color: #007b5b;
-      }
-
-      #linkButton {
-        background-color: #edc913;
-      }
-
-      #updateButton {
-        background-color: #351effbd;
-      }
-
-      .version {
-        color: white;
-        font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
-          "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
-        font-size: 10px;
-        margin-top: 10px;
-        text-align: center;
-      }
-
-      #message {
-        color: white;
-        font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
-          "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
-        font-size: 10px;
-        margin-top: 10px;
-        text-align: center;
-        display: flex;
-      }
-      
-    </style>
-    <script src="popup.js"></script>
-    <script src="content.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title data-i18n="extensionName">Slip Mate</title>
+    <link rel="stylesheet" href="popup.css" />
+    <script src="i18n.js"></script>
+    <script src="url-builder.js"></script>
+    <script src="slip-store.js"></script>
+    <script src="popup.js" defer></script>
   </head>
   <body>
-    <button id="generateButton" class="button">Copiar Link da Aposta</button>
-    <button id="linkButton" class="button">Links</button>
-    <button id="updateButton" class="button">Verificar Atualizações</button>
-    <span id="message"></span>
-    <div class="version">Versão Atual: 1.1</div>
+    <main class="app">
+      <header class="header">
+        <div class="brand-mark" aria-hidden="true">SM</div>
+        <div class="brand-copy">
+          <h1>Slip Mate</h1>
+          <p data-i18n="brandSubtitle">Bet365 link maker</p>
+        </div>
+        <span class="version">V3.2</span>
+      </header>
+
+      <section class="status-card" aria-live="polite">
+        <div class="status-line">
+          <span class="status-dot" id="statusDot"></span>
+          <div>
+            <strong id="statusTitle" data-i18n="searchingBet365">Procurando Bet365…</strong>
+            <span id="statusDetail" data-i18n="openSportsPage">Abra uma página de esportes.</span>
+          </div>
+        </div>
+        <label class="mode-row" for="modeToggle">
+          <span>
+            <strong data-i18n="noLoginSlip">Bilhete sem login</strong>
+            <small data-i18n="noLoginSlipSubtitle">Monte links mesmo sem entrar na conta</small>
+          </span>
+          <input id="modeToggle" type="checkbox" role="switch" disabled />
+        </label>
+      </section>
+
+      <section class="slip-summary">
+        <div>
+          <span class="eyebrow" id="flowLabel" data-i18n="noLoginSlip">Bilhete sem login</span>
+          <strong class="count" id="selectionCount" data-i18n="zeroSelections">0 seleções</strong>
+        </div>
+        <div class="total-block">
+          <span data-i18n="approxOdd">Odd aprox.</span>
+          <strong id="combinedOdd">—</strong>
+        </div>
+      </section>
+
+      <button id="copyButton" class="primary" type="button" disabled data-i18n="copyBetLink">Copiar link da aposta</button>
+      <button id="clearButton" class="secondary" type="button" disabled data-i18n="clearBetSlip">Limpar bilhete</button>
+      <p id="message" class="message" role="status"></p>
+
+      <details class="compatibility">
+        <summary data-i18n="compatibilityTitle">Compatibilidade do Bilhete sem login</summary>
+        <div class="compatibility-copy">
+          <p><strong class="supported" data-i18n="inSlipMate">No Slip Mate</strong> <span data-i18n="standardPrematchMarkets">Mercados normais pré-jogo.</span></p>
+          <p><strong class="native-only" data-i18n="bet365Only">Só na Bet365</strong> <span data-i18n="nativeMarkets">Criar Aposta, boosts e Ao Vivo.</span></p>
+          <small data-i18n="compatibilityNote">Se estiver logado, desligue o Bilhete sem login para usar esses mercados normalmente.</small>
+        </div>
+      </details>
+
+      <footer class="footer">
+        <button id="linkButton" type="button" data-i18n="links">Links</button>
+        <span aria-hidden="true">•</span>
+        <button id="evButton" class="ev-link" type="button" data-i18n="evCalculator">Calculadora EV ↗</button>
+        <span aria-hidden="true">•</span>
+        <button id="updateButton" type="button" data-i18n="updates">Atualizações</button>
+      </footer>
+    </main>
   </body>
 </html>

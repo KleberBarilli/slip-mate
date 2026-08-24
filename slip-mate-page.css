@@ -1,0 +1,23 @@
+html[data-slip-mate-mode="on"] .rgl-43895c:has(.rgl-4a5de5),
+html[data-slip-mate-mode="on"] .rgl-43895c.rgl-4a5de5 {
+  cursor: copy !important;
+  outline: 1px solid transparent;
+  outline-offset: -1px;
+  transition: outline-color 120ms ease, background-color 120ms ease;
+}
+
+html[data-slip-mate-mode="on"] .rgl-43895c:has(.rgl-4a5de5):hover,
+html[data-slip-mate-mode="on"] .rgl-43895c.rgl-4a5de5:hover {
+  background-color: rgba(244, 210, 60, 0.12) !important;
+  outline-color: rgba(244, 210, 60, 0.72);
+}
+
+html[data-slip-mate-mode="on"] [data-slip-mate-selected] {
+  background-color: rgba(33, 155, 113, 0.3) !important;
+  box-shadow: inset 0 0 0 2px #39d7a0 !important;
+  outline-color: #39d7a0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-slip-mate-mode="on"] .rgl-43895c { transition: none; }
+}

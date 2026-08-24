@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Slip Mate UI harness</title>
+    <style>
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background: #171918;
+        color: #fff;
+        font: 14px "Segoe UI", sans-serif;
+      }
+      .site {
+        width: min(940px, 92vw);
+        margin: 70px auto;
+      }
+      .market {
+        margin-top: 20px;
+        border-radius: 8px;
+        padding: 18px;
+        background: #242725;
+      }
+      .row { display: grid; grid-template-columns: 1fr repeat(3, 120px); gap: 4px; }
+      .row div { padding: 14px; background: #2c302e; }
+      .row .odd { color: #e5c83e; text-align: center; }
+    </style>
+    <script src="../../i18n.js"></script>
+    <script src="../../url-builder.js"></script>
+    <script src="../../slip-ui.js"></script>
+  </head>
+  <body>
+    <div class="site">
+      <h1>Bet365 layout simulation</h1>
+      <div class="market">
+        <div class="row">
+          <div>Arsenal v Chelsea</div><div class="odd">2.10</div><div class="odd">3.40</div><div class="odd">3.20</div>
+        </div>
+      </div>
+    </div>
+    <script>
+      SlipMateUI.create({}).update({
+        visible: true,
+        mappingError: "",
+        selections: [
+          {
+            eventId: "185360040",
+            selectionId: "40586567",
+            fractionalOdd: "11/10",
+            decimalOdd: 2.1,
+            selectionName: "Arsenal",
+            marketName: "Resultado da partida",
+            eventName: "Arsenal v Chelsea"
+          },
+          {
+            eventId: "184907548",
+            selectionId: "101274719",
+            fractionalOdd: "17/20",
+            decimalOdd: 1.85,
+            selectionName: "Mais de 2.5",
+            marketName: "Total de gols",
+            eventName: "Real Madrid v Valencia"
+          },
+          {
+            eventId: "184900001",
+            selectionId: "101270001",
+            fractionalOdd: "8/13",
+            decimalOdd: 1.62,
+            selectionName: "Real Madrid",
+            marketName: "Resultado da partida",
+            eventName: "Real Madrid v Valencia"
+          }
+        ]
+      });
+    </script>
+  </body>
+</html>
