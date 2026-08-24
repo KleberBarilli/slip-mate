@@ -56,6 +56,7 @@
   "unknownAction": { "message": "Ação desconhecida." },
   "unexpectedExtensionError": { "message": "Erro inesperado na extensão." },
   "unsupportedMarketError": { "message": "Este mercado não funciona no Bilhete sem login. Se estiver logado, desligue o recurso para usar pela Bet365." },
+  "selectionLabelUnavailableError": { "message": "A Bet365 não informou o nome completo desta seleção. Ela não foi adicionada." },
   "panelSubtitle": { "message": "Seu bilhete sem login" },
   "collapseSlipMate": { "message": "Recolher Slip Mate" },
   "expandSlipMate": { "message": "Expandir Slip Mate" },

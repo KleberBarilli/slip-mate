@@ -13,7 +13,33 @@
   }
 
   function displayName(selection) {
-    const baseName = selection.selectionName || selection.marketName || t(
+    const subjectName = String(selection.subjectName || "").trim();
+    const selectionName = String(selection.selectionName || "").trim();
+    const marketName = String(selection.marketName || "").trim();
+    const handicap = String(selection.handicap || "").trim();
+
+    if (subjectName) {
+      const detailParts = [];
+      if (
+        selectionName &&
+        selectionName !== subjectName &&
+        selectionName !== marketName
+      ) {
+        detailParts.push(selectionName);
+      }
+      if (
+        handicap &&
+        !subjectName.includes(handicap) &&
+        !detailParts.some((value) => value.includes(handicap))
+      ) {
+        detailParts.push(handicap);
+      }
+      return detailParts.length
+        ? `${subjectName} — ${detailParts.join(" ")}`
+        : subjectName;
+    }
+
+    const baseName = selectionName || marketName || t(
       "selectionFallback",
       String(selection.selectionId),
       `Seleção ${selection.selectionId}`
@@ -22,7 +48,7 @@
       .split(/\s+(?:v|vs\.?|x)\s+/i)
       .map((value) => value.trim())
       .filter(Boolean);
-    const resultMarket = /resultado|match result|full[- ]time result|moneyline|vencedor|winner/i
+    const resultMarket = /resultado|match result|full[- ]time result|moneyline|vencedor|winner|1x2/i
       .test(String(selection.marketName || ""));
 
     if (eventSides.length === 2 && resultMarket) {
@@ -33,7 +59,6 @@
       if (baseName === "2") return `${eventSides[1]} (2)`;
     }
 
-    const handicap = String(selection.handicap || "").trim();
     return handicap && !String(baseName).includes(handicap)
       ? `${baseName} ${handicap}`
       : baseName;
@@ -41,9 +66,10 @@
 
   function displayContext(selection) {
     const selectionName = String(selection.selectionName || "").trim();
+    const subjectName = String(selection.subjectName || "").trim();
     const values = [selection.marketName, selection.eventName]
       .map((value) => String(value || "").trim())
-      .filter((value) => value && value !== selectionName)
+      .filter((value) => value && value !== (subjectName || selectionName))
       .filter((value, index, items) => items.indexOf(value) === index);
     return values.join(" · ") || t("genericBet365Market", undefined, "Mercado Bet365");
   }
