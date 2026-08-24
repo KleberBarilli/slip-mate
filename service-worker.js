@@ -1,5 +1,9 @@
 const STORAGE_KEY = "slipMateV3State";
 
+function message(key, fallback) {
+  return chrome.i18n?.getMessage?.(key) || fallback;
+}
+
 const EMPTY_TAB_STATE = Object.freeze({
   selections: [],
   modeOverride: null,
@@ -105,7 +109,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     if (tabId === null) {
-      sendResponse({ ok: false, error: "Bet365 tab not found" });
+      sendResponse({
+        ok: false,
+        error: message("bet365TabNotFound", "Guia da Bet365 não encontrada.")
+      });
       return;
     }
 
@@ -115,7 +122,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       case "SLIP_MATE_TOGGLE_SELECTION": {
         const selection = cleanSelection(request.selection);
         if (!selection) {
-          sendResponse({ ok: false, error: "Invalid selection" });
+          sendResponse({
+            ok: false,
+            error: message("invalidSelection", "Seleção inválida.")
+          });
           return;
         }
 
@@ -173,19 +183,33 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       case "SLIP_MATE_MAPPING_ERROR":
         next = await updateTabState(tabId, (state) => ({
           ...state,
-          mappingError: String(request.message || "Não foi possível identificar esta seleção.").slice(0, 180)
+          mappingError: String(
+            request.message || message(
+              "identifySelectionFailed",
+              "Não foi possível identificar esta seleção."
+            )
+          ).slice(0, 180)
         }));
         break;
 
       default:
-        sendResponse({ ok: false, error: "Unknown action" });
+        sendResponse({
+          ok: false,
+          error: message("unknownAction", "Ação desconhecida.")
+        });
         return;
     }
 
     await broadcastState(tabId, next);
     sendResponse({ ok: true, state: next });
   })().catch((error) => {
-    sendResponse({ ok: false, error: error?.message || "Unexpected extension error" });
+    sendResponse({
+      ok: false,
+      error: error?.message || message(
+        "unexpectedExtensionError",
+        "Erro inesperado na extensão."
+      )
+    });
   });
 
   return true;

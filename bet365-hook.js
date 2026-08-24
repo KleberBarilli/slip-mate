@@ -227,7 +227,7 @@
       if ((event.type === "pointerdown" || event.type === "click") && now - lastFailureAt > 700) {
         lastFailureAt = now;
         post("BET365_MAPPING_ERROR", {
-          message: "Este mercado ainda não é compatível com o Slip Mate."
+          code: "unsupportedMarket"
         });
       }
       return;

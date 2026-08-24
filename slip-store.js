@@ -2,7 +2,13 @@
   function send(action, payload = {}) {
     return chrome.runtime.sendMessage({ action, ...payload }).then((response) => {
       if (!response?.ok) {
-        throw new Error(response?.error || "Não foi possível atualizar o Slip Mate.");
+        throw new Error(
+          response?.error || root.SlipMateI18n?.getMessage(
+            "updateStateFailed",
+            undefined,
+            "Não foi possível atualizar o Slip Mate."
+          ) || "Não foi possível atualizar o Slip Mate."
+        );
       }
       return response.state;
     });

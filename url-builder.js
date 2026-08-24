@@ -6,6 +6,8 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function createUrlBuilder() {
   const BRAZIL_BASE = "https://www.bet365.bet.br";
   const INTERNATIONAL_BASE = "https://www.bet365.com";
+  const t = (key, fallback) =>
+    globalThis.SlipMateI18n?.getMessage(key, undefined, fallback) || fallback;
 
   function isValidSelection(selection) {
     return Boolean(
@@ -23,11 +25,14 @@
 
   function buildBet365Url(selections, options = {}) {
     if (!Array.isArray(selections) || selections.length === 0) {
-      throw new Error("Adicione pelo menos uma seleção.");
+      throw new Error(t("addAtLeastOneSelection", "Adicione pelo menos uma seleção."));
     }
 
     if (selections.some((selection) => !isValidSelection(selection))) {
-      throw new Error("Uma das seleções não possui os identificadores necessários.");
+      throw new Error(t(
+        "selectionMissingIdentifiers",
+        "Uma das seleções não possui os identificadores necessários."
+      ));
     }
 
     const bs = selections

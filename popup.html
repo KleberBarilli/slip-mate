@@ -3,8 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Slip Mate</title>
+    <title data-i18n="extensionName">Slip Mate</title>
     <link rel="stylesheet" href="popup.css" />
+    <script src="i18n.js"></script>
     <script src="url-builder.js"></script>
     <script src="slip-store.js"></script>
     <script src="popup.js" defer></script>
@@ -15,23 +16,23 @@
         <div class="brand-mark" aria-hidden="true">SM</div>
         <div class="brand-copy">
           <h1>Slip Mate</h1>
-          <p>Bet365 link maker</p>
+          <p data-i18n="brandSubtitle">Bet365 link maker</p>
         </div>
-        <span class="version">V3.1</span>
+        <span class="version">V3.2</span>
       </header>
 
       <section class="status-card" aria-live="polite">
         <div class="status-line">
           <span class="status-dot" id="statusDot"></span>
           <div>
-            <strong id="statusTitle">Procurando Bet365…</strong>
-            <span id="statusDetail">Abra uma página de esportes.</span>
+            <strong id="statusTitle" data-i18n="searchingBet365">Procurando Bet365…</strong>
+            <span id="statusDetail" data-i18n="openSportsPage">Abra uma página de esportes.</span>
           </div>
         </div>
         <label class="mode-row" for="modeToggle">
           <span>
-            <strong>Modo Slip Mate</strong>
-            <small>Use o slip próprio quando quiser</small>
+            <strong data-i18n="noLoginSlip">Bilhete sem login</strong>
+            <small data-i18n="noLoginSlipSubtitle">Monte links mesmo sem entrar na conta</small>
           </span>
           <input id="modeToggle" type="checkbox" role="switch" disabled />
         </label>
@@ -39,23 +40,34 @@
 
       <section class="slip-summary">
         <div>
-          <span class="eyebrow" id="flowLabel">Slip Mate</span>
-          <strong class="count" id="selectionCount">0 seleções</strong>
+          <span class="eyebrow" id="flowLabel" data-i18n="noLoginSlip">Bilhete sem login</span>
+          <strong class="count" id="selectionCount" data-i18n="zeroSelections">0 seleções</strong>
         </div>
         <div class="total-block">
-          <span>Odd aprox.</span>
+          <span data-i18n="approxOdd">Odd aprox.</span>
           <strong id="combinedOdd">—</strong>
         </div>
       </section>
 
-      <button id="copyButton" class="primary" type="button" disabled>Copiar link da aposta</button>
-      <button id="clearButton" class="secondary" type="button" disabled>Limpar Slip Mate</button>
+      <button id="copyButton" class="primary" type="button" disabled data-i18n="copyBetLink">Copiar link da aposta</button>
+      <button id="clearButton" class="secondary" type="button" disabled data-i18n="clearBetSlip">Limpar bilhete</button>
       <p id="message" class="message" role="status"></p>
 
+      <details class="compatibility">
+        <summary data-i18n="compatibilityTitle">Compatibilidade do Bilhete sem login</summary>
+        <div class="compatibility-copy">
+          <p><strong class="supported" data-i18n="inSlipMate">No Slip Mate</strong> <span data-i18n="standardPrematchMarkets">Mercados normais pré-jogo.</span></p>
+          <p><strong class="native-only" data-i18n="bet365Only">Só na Bet365</strong> <span data-i18n="nativeMarkets">Criar Aposta, boosts e Ao Vivo.</span></p>
+          <small data-i18n="compatibilityNote">Se estiver logado, desligue o Bilhete sem login para usar esses mercados normalmente.</small>
+        </div>
+      </details>
+
       <footer class="footer">
-        <button id="linkButton" type="button">Links</button>
+        <button id="linkButton" type="button" data-i18n="links">Links</button>
         <span aria-hidden="true">•</span>
-        <button id="updateButton" type="button">Atualizações</button>
+        <button id="evButton" class="ev-link" type="button" data-i18n="evCalculator">Calculadora EV ↗</button>
+        <span aria-hidden="true">•</span>
+        <button id="updateButton" type="button" data-i18n="updates">Atualizações</button>
       </footer>
     </main>
   </body>

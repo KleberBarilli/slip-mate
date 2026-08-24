@@ -4,6 +4,8 @@
   const store = root.SlipMateStore;
   const parser = root.SlipMateParser;
   const urlBuilder = root.SlipMateURL;
+  const t = (key, substitutions, fallback) =>
+    root.SlipMateI18n?.getMessage(key, substitutions, fallback) || fallback;
 
   let authState = "unknown";
   let extensionState = { selections: [], modeOverride: null, mappingError: "" };
@@ -79,7 +81,7 @@
         baseUrl: location.origin
       });
       await copyText(url);
-      ui?.showToast("Link Bet365 copiado");
+      ui?.showToast(t("bet365LinkCopied", undefined, "Link Bet365 copiado."));
     } catch (error) {
       ui?.showToast(error.message);
     }
@@ -130,7 +132,11 @@
       const selection = parser.normalizeSelection(event.data.payload);
       if (!selection) {
         applyState(
-          await store.setMappingError("A Bet365 não forneceu todos os dados desta seleção.")
+          await store.setMappingError(t(
+            "unsupportedMarketError",
+            undefined,
+            "Este mercado não funciona no Bilhete sem login. Se estiver logado, desligue o recurso para usar pela Bet365."
+          ))
         );
         return;
       }
@@ -140,9 +146,13 @@
 
     if (event.data.type === "BET365_MAPPING_ERROR" && getEffectiveMode()) {
       applyState(
-        await store.setMappingError(
-          event.data.payload?.message || "Este mercado ainda não é compatível."
-        )
+        await store.setMappingError(t(
+          event.data.payload?.code === "unsupportedMarket"
+            ? "unsupportedMarketError"
+            : "identifySelectionFailed",
+          undefined,
+          "Este mercado não funciona no Bilhete sem login. Se estiver logado, desligue o recurso para usar pela Bet365."
+        ))
       );
     }
   });

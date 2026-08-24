@@ -1,4 +1,9 @@
 document.addEventListener("DOMContentLoaded", async () => {
+  const i18n = globalThis.SlipMateI18n;
+  const t = (key, substitutions, fallback) =>
+    i18n?.getMessage(key, substitutions, fallback) || fallback;
+  i18n?.localizeDocument(document);
+
   const statusDot = document.getElementById("statusDot");
   const statusTitle = document.getElementById("statusTitle");
   const statusDetail = document.getElementById("statusDetail");
@@ -10,6 +15,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const clearButton = document.getElementById("clearButton");
   const message = document.getElementById("message");
   const linkButton = document.getElementById("linkButton");
+  const evButton = document.getElementById("evButton");
   const updateButton = document.getElementById("updateButton");
 
   let activeTabId = null;
@@ -21,13 +27,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function selectionLabel(count) {
-    return `${count} ${count === 1 ? "seleção" : "seleções"}`;
+    return count === 1
+      ? t("selectionCountOne", String(count), `${count} seleção`)
+      : t("selectionCountMany", String(count), `${count} seleções`);
   }
 
   function renderUnavailable() {
     statusDot.className = "status-dot warn";
-    statusTitle.textContent = "Bet365 não detectada";
-    statusDetail.textContent = "Abra a Bet365 nesta guia e tente novamente.";
+    statusTitle.textContent = t("bet365NotDetected", undefined, "Bet365 não detectada");
+    statusDetail.textContent = t(
+      "openBet365Tab",
+      undefined,
+      "Abra a Bet365 nesta guia e tente novamente."
+    );
     modeToggle.disabled = true;
     copyButton.disabled = true;
     clearButton.disabled = true;
@@ -52,30 +64,48 @@ document.addEventListener("DOMContentLoaded", async () => {
     modeToggle.checked = Boolean(pageState.effectiveMode);
 
     if (pageState.authState === "logged-out") {
-      statusTitle.textContent = "Bet365 deslogada";
+      statusTitle.textContent = t("bet365SignedOut", undefined, "Bet365 deslogada");
       statusDetail.textContent = pageState.effectiveMode
-        ? "As odds entram no Slip Mate."
-        : "Ative o modo para evitar a tela de login.";
+        ? t("oddsEnterNoLoginSlip", undefined, "As odds entram no Bilhete sem login.")
+        : t(
+          "enableNoLoginSlipAvoidLogin",
+          undefined,
+          "Ative o bilhete para evitar a tela de login."
+        );
     } else if (pageState.authState === "logged-in") {
       statusTitle.textContent = pageState.effectiveMode
-        ? "Modo Slip Mate ativo"
+        ? t("noLoginSlipActive", undefined, "Bilhete sem login ativo")
         : useLegacy
-          ? "Betslip Bet365 detectado"
-          : "Bet365 conectada";
+          ? t("betslipDetected", undefined, "Betslip Bet365 detectado")
+          : t("bet365Connected", undefined, "Bet365 conectada");
       statusDetail.textContent = pageState.effectiveMode
-        ? "As odds entram no slip próprio."
+        ? t("oddsEnterOwnSlip", undefined, "As odds entram no bilhete próprio.")
         : useLegacy
-          ? "Fluxo clássico preservado."
-          : "Ative o modo para usar o slip próprio.";
+          ? t("classicFlowPreserved", undefined, "Fluxo clássico preservado.")
+          : t("enableNoLoginSlip", undefined, "Ative o bilhete para usar o slip próprio.");
     } else {
       statusDot.className = "status-dot warn";
-      statusTitle.textContent = "Estado da conta indefinido";
+      statusTitle.textContent = t(
+        "accountStateUnknown",
+        undefined,
+        "Estado da conta indefinido"
+      );
       statusDetail.textContent = pageState.effectiveMode
-        ? "Modo manual ativo."
-        : "Você ainda pode ativar o modo manualmente.";
+        ? t(
+          "noLoginSlipManualActive",
+          undefined,
+          "Bilhete sem login ativo manualmente."
+        )
+        : t(
+          "canEnableManually",
+          undefined,
+          "Você ainda pode ativar o bilhete manualmente."
+        );
     }
 
-    flowLabel.textContent = useLegacy ? "Betslip Bet365" : "Slip Mate";
+    flowLabel.textContent = useLegacy
+      ? t("betslipBet365", undefined, "Betslip Bet365")
+      : t("noLoginSlip", undefined, "Bilhete sem login");
     selectionCount.textContent = selectionLabel(selections.length);
     combinedOdd.textContent = combined ? combined.toFixed(2) : "—";
     copyButton.disabled = selections.length === 0;
@@ -102,23 +132,30 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   copyButton.addEventListener("click", async () => {
     try {
-      const selections = pageState.legacyAvailable
+      const useLegacy =
+        !pageState.effectiveMode &&
+        pageState.authState === "logged-in" &&
+        pageState.legacyAvailable;
+      const selections = useLegacy
         ? pageState.legacySelections
         : pageState.state.selections;
-      const url = pageState.legacyAvailable
+      const url = useLegacy
         ? pageState.legacyUrl
         : SlipMateURL.buildBet365Url(selections, { baseUrl: pageState.baseUrl });
       await navigator.clipboard.writeText(url);
-      setMessage("Link Bet365 copiado.");
+      setMessage(t("bet365LinkCopied", undefined, "Link Bet365 copiado."));
     } catch (error) {
-      setMessage(error.message || "Não foi possível copiar o link.", true);
+      setMessage(
+        error.message || t("copyLinkFailed", undefined, "Não foi possível copiar o link."),
+        true
+      );
     }
   });
 
   clearButton.addEventListener("click", async () => {
     try {
       pageState.state = await SlipMateStore.clear(activeTabId);
-      setMessage("Slip Mate limpo.");
+      setMessage(t("betSlipCleared", undefined, "Bilhete sem login limpo."));
       render();
     } catch (error) {
       setMessage(error.message, true);
@@ -143,6 +180,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   linkButton.addEventListener("click", () => {
     chrome.tabs.create({ url: "https://linktr.ee/thesmartbettor" });
+  });
+  evButton.addEventListener("click", () => {
+    chrome.tabs.create({ url: "https://stakemateapp.com/" });
   });
   updateButton.addEventListener("click", () => {
     chrome.tabs.create({ url: "https://github.com/KleberBarilli/slip-mate/releases" });

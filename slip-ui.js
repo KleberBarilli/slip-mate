@@ -1,5 +1,7 @@
 (function attachSlipMateUI(root) {
   const HOST_ID = "slip-mate-v3-host";
+  const t = (key, substitutions, fallback) =>
+    root.SlipMateI18n?.getMessage(key, substitutions, fallback) || fallback;
 
   function escapeHtml(value) {
     return String(value || "")
@@ -11,7 +13,11 @@
   }
 
   function displayName(selection) {
-    return selection.selectionName || selection.marketName || `Seleção ${selection.selectionId}`;
+    return selection.selectionName || selection.marketName || t(
+      "selectionFallback",
+      String(selection.selectionId),
+      `Seleção ${selection.selectionId}`
+    );
   }
 
   function create(callbacks = {}) {
@@ -226,23 +232,23 @@
           .toast { transition: none; }
         }
       </style>
-      <section class="ticket" hidden aria-label="Slip Mate">
+      <section class="ticket" hidden aria-label="${escapeHtml(t("extensionName", undefined, "Slip Mate"))}">
         <div class="rail"></div>
         <header class="header">
           <div class="mark" aria-hidden="true">SM</div>
           <div class="title">
             <strong>Slip Mate</strong>
-            <span>Seu bilhete independente</span>
+            <span>${escapeHtml(t("panelSubtitle", undefined, "Seu bilhete sem login"))}</span>
           </div>
-          <button class="collapse" type="button" aria-label="Recolher Slip Mate" aria-expanded="true">−</button>
+          <button class="collapse" type="button" aria-label="${escapeHtml(t("collapseSlipMate", undefined, "Recolher Slip Mate"))}" aria-expanded="true">−</button>
         </header>
         <div class="body">
-          <div class="mode"><span>Modo Slip Mate</span><span class="live">Ativo</span></div>
+          <div class="mode"><span>${escapeHtml(t("noLoginSlip", undefined, "Bilhete sem login"))}</span><span class="live">${escapeHtml(t("active", undefined, "Ativo"))}</span></div>
           <ul class="items"></ul>
-          <div class="summary"><span>Odd combinada aprox.</span><strong class="total">—</strong></div>
+          <div class="summary"><span>${escapeHtml(t("approxCombinedOdd", undefined, "Odd combinada aprox."))}</span><strong class="total">—</strong></div>
           <div class="actions">
-            <button class="action copy" type="button">Copiar link Bet365</button>
-            <button class="action clear" type="button">Limpar</button>
+            <button class="action copy" type="button">${escapeHtml(t("copyBet365Link", undefined, "Copiar link Bet365"))}</button>
+            <button class="action clear" type="button">${escapeHtml(t("clear", undefined, "Limpar"))}</button>
           </div>
           <p class="error" role="status"></p>
         </div>
@@ -265,12 +271,21 @@
       ticket.classList.toggle("collapsed", collapsed);
       collapseButton.textContent = collapsed ? "+" : "−";
       collapseButton.setAttribute("aria-expanded", String(!collapsed));
-      collapseButton.setAttribute("aria-label", collapsed ? "Expandir Slip Mate" : "Recolher Slip Mate");
+      collapseButton.setAttribute(
+        "aria-label",
+        collapsed
+          ? t("expandSlipMate", undefined, "Expandir Slip Mate")
+          : t("collapseSlipMate", undefined, "Recolher Slip Mate")
+      );
 
       items.innerHTML = selections.length
         ? selections.map((selection) => {
             const key = `${selection.eventId}:${selection.selectionId}`;
-            const context = selection.eventName || selection.marketName || "Mercado Bet365";
+            const context = selection.eventName || selection.marketName || t(
+              "genericBet365Market",
+              undefined,
+              "Mercado Bet365"
+            );
             const decimal = Number(selection.decimalOdd) > 1
               ? Number(selection.decimalOdd).toFixed(2)
               : root.SlipMateURL.fractionalToDecimal(selection.fractionalOdd)?.toFixed(2) || "—";
@@ -281,10 +296,10 @@
                   <div class="item-context">${escapeHtml(context)}</div>
                 </div>
                 <span class="odd">${escapeHtml(decimal)}</span>
-                <button class="remove" type="button" data-remove-key="${escapeHtml(key)}" aria-label="Remover ${escapeHtml(displayName(selection))}">×</button>
+                <button class="remove" type="button" data-remove-key="${escapeHtml(key)}" aria-label="${escapeHtml(t("removeSelection", displayName(selection), `Remover ${displayName(selection)}`))}">×</button>
               </li>`;
           }).join("")
-        : '<li class="empty">Clique em uma odd da Bet365.<br>Ela entra aqui sem abrir o login.</li>';
+        : `<li class="empty">${escapeHtml(t("emptyInstructionPrimary", undefined, "Clique em uma odd da Bet365."))}<br>${escapeHtml(t("emptyInstructionSecondary", undefined, "Ela entra aqui sem abrir o login."))}</li>`;
 
       const combined = root.SlipMateURL.getCombinedDecimal(selections);
       total.textContent = combined ? combined.toFixed(2) : "—";

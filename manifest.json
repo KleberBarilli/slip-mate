@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Slip Mate",
-  "version": "3.1.0",
+  "name": "__MSG_extensionName__",
+  "version": "3.2.0",
+  "default_locale": "pt_BR",
   "minimum_chrome_version": "102",
-  "description": "Crie e compartilhe links de apostas Bet365, inclusive sem login.",
+  "description": "__MSG_extensionDescription__",
   "permissions": ["activeTab", "clipboardWrite", "storage"],
   "background": {
     "service_worker": "service-worker.js"
@@ -25,6 +26,7 @@
       ],
       "css": ["slip-mate-page.css"],
       "js": [
+        "i18n.js",
         "url-builder.js",
         "bet365-parser.js",
         "slip-store.js",
@@ -35,6 +37,7 @@
     }
   ],
   "action": {
+    "default_title": "__MSG_extensionActionTitle__",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "images/icon16.png",

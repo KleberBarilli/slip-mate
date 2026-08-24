@@ -21,7 +21,7 @@ Those are the same three values required by the existing
 
 `bet365-hook.js` runs in the page's MAIN world at `document_start`.
 
-When Slip Mate Mode is active, it:
+When the No-login bet slip is active, it:
 
 1. listens for `pointerdown`, mouse and click events in the capture phase;
 2. walks the clicked DOM node's React fiber toward `BaseParticipant`;
