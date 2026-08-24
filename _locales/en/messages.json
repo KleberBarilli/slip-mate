@@ -67,6 +67,7 @@
     "message": "Selection $ID$",
     "placeholders": { "id": { "content": "$1" } }
   },
+  "drawSelection": { "message": "Draw" },
   "genericBet365Market": { "message": "Bet365 market" },
   "removeSelection": {
     "message": "Remove $SELECTION$",

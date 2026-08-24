@@ -60,3 +60,42 @@ test("refuses suspended selections", () => {
   };
   assert.equal(extractSelectionFromStem(participant), null);
 });
+
+test("does not mistake a propagated short selection label for the event name", () => {
+  const fixture = {
+    nodeName: "EV",
+    data: { N1: "Arsenal", N2: "Chelsea" },
+    parent: null
+  };
+  const market = {
+    nodeName: "MA",
+    data: { MA: "7788", NA: "Resultado da partida" },
+    parent: fixture
+  };
+  const participant = {
+    nodeName: "PA",
+    data: { FI: "185360040", ID: "40586567", OD: "13/10", NA: "1" },
+    parent: market
+  };
+
+  const selection = extractSelectionFromStem(participant, { decimalOdd: "2.30" });
+  assert.equal(selection.selectionName, "1");
+  assert.equal(selection.marketName, "Resultado da partida");
+  assert.equal(selection.eventName, "Arsenal v Chelsea");
+});
+
+test("uses visible page context when ancestry does not expose names", () => {
+  const participant = {
+    nodeName: "PA",
+    data: { FI: "185360040", ID: "40586567", OD: "13/10", NA: "X" },
+    parent: null
+  };
+
+  const selection = extractSelectionFromStem(participant, {
+    decimalOdd: "4.75",
+    marketName: "Resultado da partida",
+    eventName: "Arsenal v Chelsea"
+  });
+  assert.equal(selection.marketName, "Resultado da partida");
+  assert.equal(selection.eventName, "Arsenal v Chelsea");
+});

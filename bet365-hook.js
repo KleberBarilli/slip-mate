@@ -63,6 +63,16 @@
     return String(data.N1 || data.N2 || data.HT || "");
   }
 
+  function cleanLabel(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
+  }
+
+  function isUsefulContextLabel(value, selectionName) {
+    const label = cleanLabel(value);
+    if (!label || label === cleanLabel(selectionName)) return false;
+    return !/^\d+(?:[.,]\d+)?$/.test(label);
+  }
+
   function extractSelectionFromStem(stem, context = {}) {
     if (!isStem(stem)) return null;
 
@@ -76,9 +86,12 @@
 
     let cursor = stem;
     let eventId = "";
-    let eventName = "";
-    let marketName = "";
+    const selectionName = cleanLabel(stem.data.NA || context.selectionName);
+    let eventName = cleanLabel(context.eventName);
+    let marketName = cleanLabel(context.marketName);
     let marketId = "";
+    let eventNameRank = eventName ? 1 : 0;
+    let marketNameRank = marketName ? 1 : 0;
     let depth = 0;
 
     while (isStem(cursor) && depth < 40) {
@@ -87,19 +100,34 @@
       if (!marketId && data.MA) marketId = String(data.MA);
       if (!marketId && cursor.nodeName === "MA" && data.ID) marketId = String(data.ID);
 
-      if (
-        cursor !== stem &&
-        !marketName &&
-        (data.MA || cursor.nodeName === "MA" || cursor.nodeName === "MG")
-      ) {
-        marketName = nameFromData(data);
+      if (cursor !== stem) {
+        const candidateName = nameFromData(data);
+        const isMarketStem = cursor.nodeName === "MA" || cursor.nodeName === "MG";
+        const marketRank = isMarketStem ? 3 : data.MA ? 2 : 0;
+        if (
+          marketRank > marketNameRank &&
+          isUsefulContextLabel(candidateName, selectionName)
+        ) {
+          marketName = cleanLabel(candidateName);
+          marketNameRank = marketRank;
+        }
       }
 
       if (data.FI || data.PF) {
         if (!eventId) eventId = String(data.FI || data.PF);
+      }
+
+      if (cursor !== stem) {
         const candidateName = nameFromData(data);
         const isFixtureStem = cursor.nodeName === "EV" || Boolean(data.N1 && data.N2);
-        if (candidateName && (!eventName || isFixtureStem)) eventName = candidateName;
+        const eventRank = isFixtureStem ? 3 : data.FI || data.PF ? 2 : 0;
+        if (
+          eventRank > eventNameRank &&
+          isUsefulContextLabel(candidateName, selectionName)
+        ) {
+          eventName = cleanLabel(candidateName);
+          eventNameRank = eventRank;
+        }
       }
 
       cursor = cursor.parent;
@@ -114,9 +142,9 @@
       selectionId,
       fractionalOdd,
       decimalOdd: Number.isFinite(decimalOdd) && decimalOdd > 1 ? decimalOdd : null,
-      selectionName: String(stem.data.NA || context.selectionName || "").trim(),
-      marketName: String(marketName || context.marketName || "").trim(),
-      eventName: String(eventName || context.eventName || "").trim(),
+      selectionName,
+      marketName,
+      eventName,
       handicap: String(stem.data.HA || stem.data.HD || "").trim(),
       marketId
     };
@@ -157,7 +185,60 @@
     const oddsElement = participant.matches(".rgl-4a5de5")
       ? participant
       : participant.querySelector(".rgl-4a5de5");
-    return { participant, decimalOdd: oddsElement?.textContent?.trim() || "" };
+
+    function visibleText(node, maxLength = 160) {
+      const value = cleanLabel(node?.innerText || node?.textContent);
+      return value && value.length <= maxLength ? value : "";
+    }
+
+    function firstText(container, selectors, maxLength) {
+      if (!(container instanceof Element)) return "";
+      for (const selector of selectors) {
+        for (const node of container.querySelectorAll(selector)) {
+          const value = visibleText(node, maxLength);
+          if (value) return value;
+        }
+      }
+      return "";
+    }
+
+    const decimalOdd = visibleText(oddsElement, 16);
+    const explicitSelectionName = firstText(participant, [
+      ".srb-ParticipantResponsiveText_Name",
+      "[class*='ParticipantResponsiveText_Name']",
+      "[class*='ParticipantName']",
+      "[class*='Participant_Name']"
+    ], 120);
+    const participantLines = String(participant.innerText || participant.textContent || "")
+      .split(/\r?\n/)
+      .map(cleanLabel)
+      .filter((value) => value && value !== decimalOdd);
+    const selectionName = explicitSelectionName || participantLines[0] || "";
+
+    const marketGroup = participant.closest(
+      ".gl-MarketGroupPod, .gl-MarketGroup, [class*='MarketGroup'], [class*='MarketCoupon']"
+    );
+    const marketName = firstText(marketGroup, [
+      ".gl-MarketGroupButton_Text",
+      "[class*='MarketGroupButton_Text']",
+      "[class*='MarketGroupHeader']",
+      "[class*='MarketName']"
+    ], 160);
+
+    const fixture = participant.closest(
+      "[class*='FixtureDetails'], [class*='MarketCouponFixture'], [class*='EventCard']"
+    );
+    const teamNames = fixture
+      ? [...fixture.querySelectorAll(
+        "[class*='TeamName'], [class*='FixtureDetails_Team'], [class*='CompetitorName']"
+      )]
+        .map((node) => visibleText(node, 100))
+        .filter(Boolean)
+        .filter((value, index, values) => values.indexOf(value) === index)
+      : [];
+    const eventName = teamNames.length >= 2 ? `${teamNames[0]} v ${teamNames[1]}` : "";
+
+    return { participant, decimalOdd, selectionName, marketName, eventName };
   }
 
   function resolveSelection(path) {

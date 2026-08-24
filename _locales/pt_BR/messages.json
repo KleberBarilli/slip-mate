@@ -67,6 +67,7 @@
     "message": "Seleção $ID$",
     "placeholders": { "id": { "content": "$1" } }
   },
+  "drawSelection": { "message": "Empate" },
   "genericBet365Market": { "message": "Mercado Bet365" },
   "removeSelection": {
     "message": "Remover $SELECTION$",
