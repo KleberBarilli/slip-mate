@@ -37,6 +37,26 @@ test("parses the current normal-bet ordering around TP topics", () => {
   assert.equal(selections[1].fractionalOdd, "4/5");
 });
 
+test("keeps every leg when Bet365 omits the topic on same-player lines", () => {
+  const betstring =
+    "bt=99&ns=pt=N#o=1/16#pv=1/16#f=199940808#fp=1974904555#so=#c=1" +
+    "#sa=6a9041a0-83B60A9F#ln=0.5#mt=13#|TP=BS199940808-1974904555#||" +
+    "pt=N#o=1/3#pv=1/3#f=199940808#fp=1974904561#so=#c=1" +
+    "#sa=6a9041a0-B800DF93#ln=1.5#mt=13#||";
+
+  assert.deepEqual(
+    parseLegacyBetstring(betstring).map(({ eventId, selectionId, fractionalOdd }) => ({
+      eventId,
+      selectionId,
+      fractionalOdd
+    })),
+    [
+      { eventId: "199940808", selectionId: "1974904555", fractionalOdd: "1/16" },
+      { eventId: "199940808", selectionId: "1974904561", fractionalOdd: "1/3" }
+    ]
+  );
+});
+
 test("normalizes only safe page selections", () => {
   assert.equal(
     normalizeSelection({ eventId: "12", selectionId: "34", fractionalOdd: "6/5" })
