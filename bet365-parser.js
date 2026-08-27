@@ -57,45 +57,45 @@
     const source = typeof betString === "string" ? betString : "";
     if (!source) return [];
 
-    const topics = [...source.matchAll(/TP=BS(\d+)-(\d+)/g)];
-    const legacyOdds = [...source.matchAll(/N#o=(\d+\/\d+)#/g)].map((match) => match[1]);
     const selections = [];
     const seen = new Set();
 
     function add(eventId, selectionId, fractionalOdd) {
       const selection = normalizeSelection({ eventId, selectionId, fractionalOdd });
-      if (!selection) return;
+      if (!selection) return false;
       const key = `${selection.eventId}:${selection.selectionId}`;
-      if (seen.has(key)) return;
+      if (seen.has(key)) return false;
       seen.add(key);
       selections.push(selection);
+      return true;
     }
 
-    if (topics.length > 0 && topics.length === legacyOdds.length) {
-      topics.forEach((topic, index) => add(topic[1], topic[2], legacyOdds[index]));
-      return selections;
-    }
+    // Each `||` block is one leg. Bet365 omits `TP=BS` on some legs (for
+    // example a second line of the same player market), so the block fields
+    // are authoritative and the topic is only a fallback.
+    source.split("||").forEach((block) => {
+      if (!block.trim()) return;
 
-    topics.forEach((topic) => {
-      const topicIndex = topic.index || 0;
-      const previousNormal = source.lastIndexOf("pt=N", topicIndex);
-      const previousDivider = source.lastIndexOf("||", topicIndex);
-      const start = Math.max(0, previousNormal, previousDivider);
-      const nextDivider = source.indexOf("||", topicIndex);
-      const end = nextDivider === -1 ? source.length : nextDivider;
-      const block = source.slice(start, end);
-      const odd = block.match(/(?:^|[#|])o=(\d+\/\d+)(?:#|$)/)?.[1];
-      add(topic[1], topic[2], odd);
+      const eventId = block.match(/(?:^|[#|])f=(\d+)(?:#|$)/)?.[1];
+      const selectionId = block.match(/(?:^|[#|])fp=(\d+)(?:#|$)/)?.[1];
+      const fractionalOdd = block.match(/(?:^|[#|])o=(\d+\/\d+)(?:#|$)/)?.[1];
+
+      if (add(eventId, selectionId, fractionalOdd)) return;
+
+      [...block.matchAll(/TP=BS(\d+)-(\d+)/g)].forEach((topic) =>
+        add(topic[1], topic[2], fractionalOdd)
+      );
     });
 
     if (selections.length > 0) return selections;
 
-    source.split("||").forEach((block) => {
-      const eventId = block.match(/(?:^|[#|])f=(\d+)(?:#|$)/)?.[1];
-      const selectionId = block.match(/(?:^|[#|])fp=(\d+)(?:#|$)/)?.[1];
-      const fractionalOdd = block.match(/(?:^|[#|])o=(\d+\/\d+)(?:#|$)/)?.[1];
-      add(eventId, selectionId, fractionalOdd);
-    });
+    // Oldest layout: the odds live in a separate list, aligned with the topics.
+    const topics = [...source.matchAll(/TP=BS(\d+)-(\d+)/g)];
+    const legacyOdds = [...source.matchAll(/N#o=(\d+\/\d+)#/g)].map((match) => match[1]);
+
+    if (topics.length > 0 && topics.length === legacyOdds.length) {
+      topics.forEach((topic, index) => add(topic[1], topic[2], legacyOdds[index]));
+    }
 
     return selections;
   }

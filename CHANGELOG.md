@@ -1,5 +1,24 @@
 # Changelog
 
+## 3.2.3 — 2026-08-27
+
+### Correção
+
+- mantém todas as pernas do betslip da Bet365 ao gerar o link quando a casa
+  omite o tópico `TP=BS` em alguma delas, o que acontece com duas linhas do
+  mesmo jogador e mercado (por exemplo `1+ faltas` e `2+ faltas`);
+- passa a tratar cada bloco `||` do betstring como uma perna, usando `f=`,
+  `fp=` e `o=` como fonte principal e deixando `TP=BS` apenas como reserva;
+- preserva o formato mais antigo, em que as odds vêm em lista separada dos
+  tópicos, como último recurso.
+
+### Validação
+
+- teste automatizado com o betstring real de `1+ faltas` + `2+ faltas` no
+  mesmo evento;
+- casos antigos de betstring (V2 e ordenação atual) cobertos pelos testes
+  existentes.
+
 ## 3.2.2 — 2026-08-24
 
 ### Correção
