@@ -70,6 +70,9 @@
   },
   "drawSelection": { "message": "Draw" },
   "genericBet365Market": { "message": "Bet365 market" },
+  "eventLabel": { "message": "Match" },
+  "overSelection": { "message": "Over" },
+  "underSelection": { "message": "Under" },
   "removeSelection": {
     "message": "Remove $SELECTION$",
     "placeholders": { "selection": { "content": "$1" } }

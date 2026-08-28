@@ -67,6 +67,36 @@
     return String(value || "").replace(/\s+/g, " ").trim();
   }
 
+  function hasFixtureSides(value) {
+    return cleanLabel(value)
+      .split(/\s+(?:v|vs\.?|x|@|-|–|—)\s+/i)
+      .filter(Boolean).length === 2;
+  }
+
+  function closestSideIndex(participantCenter, teamCenters) {
+    if (!Number.isFinite(participantCenter) || teamCenters?.length !== 2) return -1;
+    const distances = teamCenters.map((center) =>
+      Number.isFinite(center) ? Math.abs(participantCenter - center) : Infinity
+    );
+    if (!Number.isFinite(distances[0]) || !Number.isFinite(distances[1])) return -1;
+    if (Math.abs(distances[0] - distances[1]) < 2) return -1;
+    return distances[0] < distances[1] ? 0 : 1;
+  }
+
+  function twoRowSideIndex(participantCenter, rowCenters, maxDistance = 70) {
+    if (!Number.isFinite(participantCenter) || !Array.isArray(rowCenters)) return -1;
+    const nearby = rowCenters
+      .filter(Number.isFinite)
+      .filter((center) => Math.abs(center - participantCenter) <= maxDistance)
+      .filter((center, index, values) =>
+        values.findIndex((value) => Math.abs(value - center) < 2) === index
+      )
+      .sort((left, right) => left - right);
+    if (nearby.length !== 2 || Math.abs(nearby[1] - nearby[0]) < 2) return -1;
+    return Math.abs(participantCenter - nearby[0]) <
+      Math.abs(participantCenter - nearby[1]) ? 0 : 1;
+  }
+
   function isUsefulContextLabel(value, selectionName) {
     const label = cleanLabel(value);
     if (!label || label === cleanLabel(selectionName)) return false;
@@ -74,9 +104,16 @@
   }
 
   function hasUsableSelectionLabel(selection) {
-    return Boolean(cleanLabel(
-      selection?.subjectName || selection?.selectionName || selection?.handicap
-    ));
+    const label = cleanLabel(
+      selection?.subjectName || selection?.teamName ||
+      selection?.selectionName || selection?.handicap
+    );
+    if (!label) return false;
+
+    const isShortResult = /^(?:1|x|2)$/i.test(label) &&
+      /resultado|match result|full[- ]time result|moneyline|vencedor|winner|1x2/i
+        .test(cleanLabel(selection?.marketName));
+    return !isShortResult || hasFixtureSides(selection?.eventName);
   }
 
   function extractSelectionFromStem(stem, context = {}) {
@@ -93,16 +130,19 @@
     let cursor = stem;
     let eventId = "";
     const subjectName = cleanLabel(context.subjectName);
+    const contextTeamName = cleanLabel(context.teamName);
     const visibleSelectionName = cleanLabel(context.selectionName);
     const selectionName = cleanLabel(
-      subjectName && visibleSelectionName
+      (subjectName || contextTeamName) && visibleSelectionName
         ? visibleSelectionName
         : stem.data.NA || visibleSelectionName
     );
     let eventName = cleanLabel(context.eventName);
     let marketName = cleanLabel(context.marketName);
     let marketId = "";
-    let eventNameRank = eventName ? 1 : 0;
+    // A fixture read from the visible coupon is more reliable than a generic
+    // React ancestor. Some event stems expose only the competition as NA.
+    let eventNameRank = hasFixtureSides(eventName) ? 4 : eventName ? 1 : 0;
     let marketNameRank = marketName ? 1 : 0;
     let depth = 0;
 
@@ -135,6 +175,7 @@
         const eventRank = isFixtureStem ? 3 : data.FI || data.PF ? 2 : 0;
         if (
           eventRank > eventNameRank &&
+          hasFixtureSides(candidateName) &&
           isUsefulContextLabel(candidateName, selectionName)
         ) {
           eventName = cleanLabel(candidateName);
@@ -148,6 +189,24 @@
 
     if (!/^\d+$/.test(eventId)) return null;
 
+    const eventSides = eventName
+      .split(/\s+(?:v|vs\.?|x|@|-|–|—)\s+/i)
+      .map(cleanLabel)
+      .filter(Boolean);
+    const usesTeamLine =
+      /handicap|spread|to win|winner|moneyline|match betting|draw no bet|vencedor/i
+        .test(`${marketName} ${selectionName}`) ||
+      /^[+-]\s*\d/.test(selectionName);
+    const sideIndex = Number(context.sideIndex);
+    const teamName = contextTeamName || (
+      !subjectName &&
+      usesTeamLine &&
+      Number.isInteger(sideIndex) &&
+      sideIndex >= 0 &&
+      sideIndex < eventSides.length
+        ? eventSides[sideIndex]
+        : ""
+    );
     const decimalOdd = Number.parseFloat(String(context.decimalOdd || "").replace(",", "."));
     return {
       eventId,
@@ -156,6 +215,7 @@
       decimalOdd: Number.isFinite(decimalOdd) && decimalOdd > 1 ? decimalOdd : null,
       selectionName,
       subjectName,
+      teamName,
       marketName,
       eventName,
       handicap: String(stem.data.HA || stem.data.HD || "").trim(),
@@ -164,10 +224,13 @@
   }
 
   const api = {
+    closestSideIndex,
     extractSelectionFromStem,
     findStemOnNode,
+    hasFixtureSides,
     hasUsableSelectionLabel,
-    nameFromData
+    nameFromData,
+    twoRowSideIndex
   };
   if (typeof module === "object" && module.exports) module.exports = api;
 
@@ -195,7 +258,7 @@
     return null;
   }
 
-  function getDisplayContext(element) {
+  function getDisplayContext(element, pointer = {}) {
     if (!(element instanceof Element)) return {};
     const participant = element.classList.contains("rgl-43895c")
       ? element
@@ -349,29 +412,209 @@
         .find((value) => value && value !== decimalOdd) || "";
     }
 
+    function isCompetitorLabel(value) {
+      const label = cleanLabel(value);
+      if (!label || !/\p{L}/u.test(label) || label.toLocaleUpperCase() === "N/A") {
+        return false;
+      }
+      if (/^(?:mon|tue|wed|thu|fri|sat|sun|seg|ter|qua|qui|sex|sáb|sab|dom)\b/i.test(label)) {
+        return false;
+      }
+      return !/^(?:to win|vencedor|winner|moneyline|handicap|spread|total(?: maps| goals| points| games| sets)?|map total|game total|match result|resultado(?: da partida)?|1x2|over|under|mais de|menos de|yes|no|sim|não)$/i
+        .test(label);
+    }
+
+    function uniqueCompetitorLabels(container) {
+      if (!(container instanceof Element)) return [];
+      const nodes = container.children.length === 0
+        ? [container]
+        : [...container.querySelectorAll("span, p, div")]
+          .filter((node) => node.children.length === 0);
+      return nodes
+        .filter((node) => !node.closest(".rgl-43895c"))
+        .map((node) => visibleText(node, 100))
+        .filter(isCompetitorLabel)
+        .filter((value, index, values) => values.indexOf(value) === index);
+    }
+
+    function teamPairFromContainer(container) {
+      if (!(container instanceof Element)) return [];
+
+      const strongNames = [...container.querySelectorAll(
+        "[class*='TeamName'], [class*='FixtureDetails_Team'], [class*='CompetitorName']"
+      )]
+        .map((node) => visibleText(node, 100))
+        .filter(isCompetitorLabel)
+        .filter((value, index, values) => values.indexOf(value) === index);
+      if (strongNames.length === 2) return strongNames;
+
+      const branches = [container, ...container.querySelectorAll("div, section, article, li")]
+        .filter((node) => !node.contains(participant))
+        .filter((node) => node.querySelectorAll(".rgl-43895c").length === 0)
+        .map((node) => ({
+          labels: uniqueCompetitorLabels(node),
+          size: node.querySelectorAll("*").length
+        }))
+        .filter((candidate) => candidate.labels.length === 2)
+        .sort((left, right) => left.size - right.size);
+      return branches[0]?.labels || [];
+    }
+
+    function selectionSideIndex(boundary, teamNames = []) {
+      let orderedFallback = -1;
+      let cursor = participant.parentElement;
+      while (cursor && cursor !== boundary.parentElement) {
+        const participants = [...cursor.querySelectorAll(".rgl-43895c")];
+        const index = participants.findIndex((node) =>
+          node === participant ||
+          node.contains(participant) ||
+          participant.contains(node)
+        );
+        if (participants.length === 2 && index >= 0) return index;
+        if (
+          orderedFallback < 0 &&
+          index >= 0 &&
+          participants.length > 2 &&
+          participants.length % 2 === 0
+        ) {
+          orderedFallback = index % 2;
+        }
+        if (cursor === boundary) break;
+        cursor = cursor.parentElement;
+      }
+
+      const participantRect = participant.getBoundingClientRect?.();
+      if (
+        participantRect &&
+        participantRect.height > 0 &&
+        teamNames.length === 2
+      ) {
+        const participantY = participantRect.top + participantRect.height / 2;
+        const distances = teamNames.map((teamName) => {
+          const matchingNodes = [...boundary.querySelectorAll("span, p, div")]
+            .filter((node) => !node.closest(".rgl-43895c"))
+            .filter((node) => visibleText(node, 100) === teamName)
+            .map((node) => node.getBoundingClientRect?.())
+            .filter((rect) => rect && rect.height > 0)
+            .map((rect) => Math.abs(participantY - (rect.top + rect.height / 2)));
+          return matchingNodes.length ? Math.min(...matchingNodes) : Infinity;
+        });
+        if (Number.isFinite(distances[0]) && Number.isFinite(distances[1])) {
+          return distances[0] <= distances[1] ? 0 : 1;
+        }
+      }
+
+      return orderedFallback;
+    }
+
+    function pageGeometrySideIndex(teamNames) {
+      const participantRect = participant.getBoundingClientRect?.();
+      if (!participantRect || participantRect.height <= 0 || teamNames.length !== 2) {
+        return -1;
+      }
+
+      const participantCenter = participantRect.top + participantRect.height / 2;
+      const teamCenters = teamNames.map((teamName) => {
+        const distances = [...scope.document.querySelectorAll("span, p, div")]
+          .filter((node) => !node.closest(".rgl-43895c"))
+          .filter((node) => visibleText(node, 100) === teamName)
+          .map((node) => node.getBoundingClientRect?.())
+          .filter((rect) => rect && rect.height > 0)
+          .map((rect) => rect.top + rect.height / 2)
+          .sort((left, right) =>
+            Math.abs(left - participantCenter) - Math.abs(right - participantCenter)
+          );
+        return distances[0];
+      });
+
+      return closestSideIndex(participantCenter, teamCenters);
+    }
+
+    function participantColumnSideIndex() {
+      const participantRect = participant.getBoundingClientRect?.();
+      if (!participantRect || participantRect.height <= 0 || participantRect.width <= 0) {
+        return -1;
+      }
+      const participantCenter = participantRect.top + participantRect.height / 2;
+      const rowCenters = [...scope.document.querySelectorAll(".rgl-43895c")]
+        .map((node) => node.getBoundingClientRect?.())
+        .filter((rect) => rect && rect.height > 0 && rect.width > 0)
+        .filter((rect) => {
+          const overlap = Math.max(0,
+            Math.min(rect.right, participantRect.right) -
+            Math.max(rect.left, participantRect.left)
+          );
+          return overlap >= Math.min(rect.width, participantRect.width) * 0.75;
+        })
+        .map((rect) => rect.top + rect.height / 2);
+      return twoRowSideIndex(participantCenter, rowCenters);
+    }
+
+    function pointerCompetitorSideIndex() {
+      const pointerX = Number(pointer.x);
+      const pointerY = Number(pointer.y);
+      if (!Number.isFinite(pointerX) || !Number.isFinite(pointerY)) return -1;
+
+      const candidates = [...scope.document.querySelectorAll("span, p, div")]
+        .filter((node) => node.children.length === 0)
+        .map((node) => ({
+          label: visibleText(node, 100),
+          rect: node.getBoundingClientRect?.()
+        }))
+        .filter(({ label, rect }) =>
+          isCompetitorLabel(label) &&
+          rect && rect.height > 0 && rect.width > 0 &&
+          rect.right < pointerX - 20 &&
+          pointerX - rect.right < 750 &&
+          Math.abs((rect.top + rect.height / 2) - pointerY) <= 70
+        )
+        .sort((left, right) => right.rect.right - left.rect.right);
+      if (candidates.length < 2) return -1;
+
+      const nearestRight = candidates[0].rect.right;
+      const rowCenters = candidates
+        .filter(({ rect }) => nearestRight - rect.right < 80)
+        .map(({ rect }) => rect.top + rect.height / 2);
+      return twoRowSideIndex(pointerY, rowCenters);
+    }
+
     function couponContext() {
       let cursor = participant;
       let depth = 0;
+      let sideIndex = -1;
 
-      while (cursor && depth < 8) {
+      while (cursor && depth < 10) {
         const headers = [...cursor.querySelectorAll("header")]
           .map((node) => visibleText(node, 20).toLocaleUpperCase());
+        const participants = cursor.querySelectorAll(".rgl-43895c");
+        if (participants.length >= 2) {
+          const candidateSideIndex = selectionSideIndex(cursor);
+          if (sideIndex < 0 && candidateSideIndex >= 0) sideIndex = candidateSideIndex;
+          const teams = teamPairFromContainer(cursor);
+          if (teams.length === 2) {
+            const isThreeWay = headers.includes("1") &&
+              headers.includes("X") && headers.includes("2");
+            return {
+              marketName: isThreeWay ? "1X2" : "",
+              eventName: `${teams[0]} v ${teams[1]}`,
+              teamNames: teams,
+              sideIndex: selectionSideIndex(cursor, teams)
+            };
+          }
+        }
         if (headers.includes("1") && headers.includes("X") && headers.includes("2")) {
-          const teams = [...cursor.querySelectorAll("span")]
-            .filter((node) => !node.closest(".rgl-43895c"))
-            .map((node) => visibleText(node, 100))
-            .filter((value) => value && /\p{L}/u.test(value))
-            .filter((value, index, values) => values.indexOf(value) === index);
           return {
             marketName: "1X2",
-            eventName: teams.length >= 2 ? `${teams[0]} v ${teams[1]}` : ""
+            eventName: "",
+            teamNames: [],
+            sideIndex: -1
           };
         }
         cursor = cursor.parentElement;
         depth += 1;
       }
 
-      return { marketName: "", eventName: "" };
+      return { marketName: "", eventName: "", teamNames: [], sideIndex };
     }
 
     function standardMarketName() {
@@ -398,8 +641,10 @@
     function playerDetails(card) {
       if (!(card instanceof Element)) return { subjectName: "", marketName: "" };
       const names = playerNameNodes(card);
-      const isRenderedMarketTable = [...card.classList]
-        .some((className) => /^rrb-/.test(className));
+      const activeMarket = activePlayerMarket(card);
+      const meaningfulMarket = /^(?:main|principal)$/i.test(activeMarket)
+        ? ""
+        : activeMarket;
       let cursor = participant;
 
       while (cursor && cursor !== card) {
@@ -410,7 +655,7 @@
         ) {
           return {
             subjectName: visibleText(rowNames[0], 100),
-            marketName: isRenderedMarketTable ? "" : activePlayerMarket(card)
+            marketName: meaningfulMarket
           };
         }
         cursor = cursor.parentElement;
@@ -434,15 +679,13 @@
           .find((value) => value && /\p{L}/u.test(value));
         return {
           subjectName: visibleText(names[rowIndex], 100),
-          marketName: isRenderedMarketTable
-            ? ""
-            : columnHeader || activePlayerMarket(card)
+          marketName: columnHeader || meaningfulMarket
         };
       }
 
       return {
         subjectName: "",
-        marketName: isRenderedMarketTable ? "" : activePlayerMarket(card)
+        marketName: meaningfulMarket
       };
     }
 
@@ -479,7 +722,7 @@
     const fixture = participant.closest(
       "[class*='FixtureDetails'], [class*='MarketCouponFixture'], [class*='EventCard']"
     );
-    const teamNames = fixture
+    const fixtureTeamNames = fixture
       ? [...fixture.querySelectorAll(
         "[class*='TeamName'], [class*='FixtureDetails_Team'], [class*='CompetitorName']"
       )]
@@ -487,29 +730,58 @@
         .filter(Boolean)
         .filter((value, index, values) => values.indexOf(value) === index)
       : [];
+    const teamNames = coupon.teamNames.length === 2
+      ? coupon.teamNames
+      : fixtureTeamNames;
     const eventName = eventNameFromContainer(playerCard) || coupon.eventName ||
       (teamNames.length >= 2 ? `${teamNames[0]} v ${teamNames[1]}` : "") ||
       (/\/E\d+\//.test(scope.location?.hash || "")
         ? eventNameFromContainer(scope.document)
         : "");
+    const usesTeamLine =
+      /handicap|spread|to win|winner|moneyline|match betting|draw no bet|vencedor/i
+        .test(`${marketName} ${selectionName}`) ||
+      /^[+-]\s*\d/.test(selectionName) ||
+      !selectionName;
+    const visualSideIndex = usesTeamLine ? pageGeometrySideIndex(teamNames) : -1;
+    const columnSideIndex = usesTeamLine ? participantColumnSideIndex() : -1;
+    const pointerSideIndex = usesTeamLine ? pointerCompetitorSideIndex() : -1;
+    const structuralSideIndex = usesTeamLine
+      ? selectionSideIndex(scope.document.documentElement)
+      : -1;
+    const sideIndex = pointerSideIndex >= 0
+      ? pointerSideIndex
+      : visualSideIndex >= 0
+        ? visualSideIndex
+        : columnSideIndex >= 0
+          ? columnSideIndex
+          : coupon.sideIndex >= 0
+            ? coupon.sideIndex
+            : structuralSideIndex;
+    const teamName = !player.subjectName && usesTeamLine &&
+      sideIndex >= 0 && sideIndex < teamNames.length
+      ? teamNames[sideIndex]
+      : "";
 
     return {
       participant,
       decimalOdd,
       selectionName,
       subjectName: player.subjectName,
+      teamName,
       marketName,
       eventName,
+      sideIndex,
       playerMarket: Boolean(playerCard)
     };
   }
 
-  function resolveSelection(path) {
+  function resolveSelection(path, pointer) {
     for (const node of path) {
       if (!(node instanceof Element)) continue;
       const stem = findStemOnNode(node);
       if (!stem) continue;
-      const context = getDisplayContext(node);
+      const context = getDisplayContext(node, pointer);
       const selection = extractSelectionFromStem(stem, context);
       if (selection) {
         const errorCode =
@@ -572,7 +844,10 @@
     if (!enabled || event.button > 0) return;
 
     const path = typeof event.composedPath === "function" ? event.composedPath() : [event.target];
-    const resolved = resolveSelection(path);
+    const resolved = resolveSelection(path, {
+      x: event.clientX,
+      y: event.clientY
+    });
     const potential = resolved?.element || getStemPotential(path) || getPotentialParticipant(path);
 
     if (!resolved) {

@@ -52,9 +52,10 @@ test("normalizes only safe page selections", () => {
       eventId: "12",
       selectionId: "34",
       fractionalOdd: "6/5",
-      subjectName: "Matheus Martins"
-    }).subjectName,
-    "Matheus Martins"
+      subjectName: "Matheus Martins",
+      teamName: "MIBR"
+    }).teamName,
+    "MIBR"
   );
 });
 

@@ -2,6 +2,15 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { extractSelectionFromStem } = require("../bet365-hook.js");
 
+test("maps a row-aligned odd to the closest fixture side", () => {
+  const { closestSideIndex, twoRowSideIndex } = require("../bet365-hook.js");
+  assert.equal(closestSideIndex(220, [190, 220]), 1);
+  assert.equal(closestSideIndex(190, [190, 220]), 0);
+  assert.equal(closestSideIndex(205, [190, 220]), -1);
+  assert.equal(twoRowSideIndex(220, [190, 220, 360]), 1);
+  assert.equal(twoRowSideIndex(190, [190, 220, 360]), 0);
+});
+
 test("extracts Bet365 IDs and native OD from a React stem", () => {
   const fixture = {
     nodeName: "EV",
@@ -26,6 +35,7 @@ test("extracts Bet365 IDs and native OD from a React stem", () => {
     decimalOdd: 3.6,
     selectionName: "Arsenal",
     subjectName: "",
+    teamName: "",
     marketName: "Match Result",
     eventName: "Arsenal v Chelsea",
     handicap: "",
@@ -101,6 +111,32 @@ test("uses visible page context when ancestry does not expose names", () => {
   assert.equal(selection.eventName, "Arsenal v Chelsea");
 });
 
+test("does not replace a visible fixture with an ancestor competition", () => {
+  const event = {
+    nodeName: "EV",
+    data: { FI: "185360040", NA: "Copa do Brasil" },
+    parent: null
+  };
+  const market = {
+    nodeName: "MA",
+    data: { ID: "7788", NA: "1X2", MA: "7788" },
+    parent: event
+  };
+  const participant = {
+    nodeName: "PA",
+    data: { ID: "40586567", OD: "17/20", NA: "1" },
+    parent: market
+  };
+
+  const selection = extractSelectionFromStem(participant, {
+    decimalOdd: "1.85",
+    marketName: "1X2",
+    eventName: "Internacional v Grêmio"
+  });
+
+  assert.equal(selection.eventName, "Internacional v Grêmio");
+});
+
 test("keeps the player name separate from a generic player market label", () => {
   const fixture = {
     nodeName: "EV",
@@ -130,6 +166,59 @@ test("keeps the player name separate from a generic player market label", () => 
   assert.equal(selection.marketName, "Para Marcar");
 });
 
+test("keeps a team name separate from its handicap line", () => {
+  const fixture = {
+    nodeName: "EV",
+    data: { FI: "198646900", N1: "Leviatan", N2: "MIBR" },
+    parent: null
+  };
+  const participant = {
+    nodeName: "PA",
+    data: { ID: "91767349999", OD: "1/2", NA: "+1.5" },
+    parent: fixture
+  };
+
+  const selection = extractSelectionFromStem(participant, {
+    decimalOdd: "1.50",
+    selectionName: "+1.5",
+    teamName: "MIBR",
+    marketName: "Handicap",
+    eventName: "Leviatan v MIBR"
+  });
+
+  assert.equal(selection.teamName, "MIBR");
+  assert.equal(selection.selectionName, "+1.5");
+  assert.equal(selection.eventName, "Leviatan v MIBR");
+});
+
+test("maps an unlabeled team row after the stem supplies the fixture names", () => {
+  const fixture = {
+    nodeName: "EV",
+    data: { FI: "198646900", N1: "Leviatan", N2: "MIBR" },
+    parent: null
+  };
+  const market = {
+    nodeName: "MA",
+    data: { ID: "7789", MA: "7789", NA: "To Win" },
+    parent: fixture
+  };
+  const participant = {
+    nodeName: "PA",
+    data: { ID: "91767350000", OD: "3/2", NA: "To Win" },
+    parent: market
+  };
+
+  const selection = extractSelectionFromStem(participant, {
+    decimalOdd: "2.50",
+    selectionName: "To Win",
+    marketName: "To Win",
+    sideIndex: 1
+  });
+
+  assert.equal(selection.teamName, "MIBR");
+  assert.equal(selection.eventName, "Leviatan v MIBR");
+});
+
 test("prefers a visible player threshold over a propagated market name", () => {
   const fixture = { data: { FI: "198646827" }, parent: null };
   const participant = {
@@ -153,4 +242,14 @@ test("requires a visible selection or subject label", () => {
   assert.equal(hasUsableSelectionLabel({ selectionName: "" }), false);
   assert.equal(hasUsableSelectionLabel({ selectionName: "X" }), true);
   assert.equal(hasUsableSelectionLabel({ subjectName: "Matheus Martins" }), true);
+  assert.equal(hasUsableSelectionLabel({
+    selectionName: "1",
+    marketName: "1X2",
+    eventName: "Copa do Brasil"
+  }), false);
+  assert.equal(hasUsableSelectionLabel({
+    selectionName: "1",
+    marketName: "1X2",
+    eventName: "Internacional v Grêmio"
+  }), true);
 });

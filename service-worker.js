@@ -37,6 +37,7 @@ function cleanSelection(selection) {
     decimalOdd: Number.isFinite(decimalOdd) && decimalOdd > 1 ? decimalOdd : null,
     selectionName: String(selection.selectionName || "").slice(0, 160),
     subjectName: String(selection.subjectName || "").slice(0, 160),
+    teamName: String(selection.teamName || "").slice(0, 160),
     marketName: String(selection.marketName || "").slice(0, 160),
     eventName: String(selection.eventName || "").slice(0, 200),
     handicap: String(selection.handicap || "").slice(0, 60),

@@ -70,6 +70,9 @@
   },
   "drawSelection": { "message": "Empate" },
   "genericBet365Market": { "message": "Mercado Bet365" },
+  "eventLabel": { "message": "Partida" },
+  "overSelection": { "message": "Mais de" },
+  "underSelection": { "message": "Menos de" },
   "removeSelection": {
     "message": "Remover $SELECTION$",
     "placeholders": { "selection": { "content": "$1" } }

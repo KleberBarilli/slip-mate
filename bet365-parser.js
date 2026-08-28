@@ -17,6 +17,7 @@
       decimalOdd: Number(value.decimalOdd) > 1 ? Number(value.decimalOdd) : null,
       selectionName: optionalText(value.selectionName, 160),
       subjectName: optionalText(value.subjectName, 160),
+      teamName: optionalText(value.teamName, 160),
       marketName: optionalText(value.marketName, 160),
       eventName: optionalText(value.eventName, 200),
       handicap: optionalText(value.handicap, 60),

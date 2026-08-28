@@ -47,12 +47,14 @@ test("stores, toggles and clears a slip independently per tab", async () => {
     eventId: "185360040",
     selectionId: "40586567",
     fractionalOdd: "13/5",
-    selectionName: "Arsenal"
+    selectionName: "+1.5",
+    teamName: "Arsenal"
   };
 
   let response = await send({ action: "SLIP_MATE_TOGGLE_SELECTION", selection });
   assert.equal(response.ok, true);
   assert.equal(response.state.selections.length, 1);
+  assert.equal(response.state.selections[0].teamName, "Arsenal");
 
   response = await send({ action: "SLIP_MATE_TOGGLE_SELECTION", selection });
   assert.equal(response.state.selections.length, 0);
